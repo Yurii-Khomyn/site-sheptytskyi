@@ -1,0 +1,49 @@
+{
+    "name": "chervonograd-bot-diia",
+    "main": "src/pages/Home/Home.js",
+    "scripts": {
+        "start": "webpack serve --open --config webpack.dev.js",
+        "build": "webpack --config webpack.prod.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/dmytror52/chervonograd-bot-diia.git"
+    },
+    "author": "dmytror52",
+    "browserslist": ">= 0.5%, last 2 major versions, not dead, Chrome >= 60, Firefox >= 60, Firefox ESR, iOS >= 12, Safari >= 12, not Explorer <= 11",
+    "devDependencies": {
+        "@babel/core": "^7.17.9",
+        "@babel/preset-env": "^7.16.11",
+        "autoprefixer": "^10.4.4",
+        "babel-loader": "^9.1.2",
+        "css-loader": "^6.7.1",
+        "css-minimizer-webpack-plugin": "^5.0.0",
+        "csv-loader": "^3.0.3",
+        "html-loader": "^4.2.0",
+        "html-webpack-plugin": "^5.5.0",
+        "mini-css-extract-plugin": "^2.6.0",
+        "modern-normalize": "^1.1.0",
+        "postcss": "^8.4.21",
+        "postcss-loader": "^7.1.0",
+        "sass": "^1.60.0",
+        "sass-loader": "^13.2.2",
+        "style-loader": "^3.3.1",
+        "terser-webpack-plugin": "^5.3.1",
+        "webpack": "^5.72.0",
+        "webpack-cli": "^5.0.1",
+        "webpack-dev-server": "^4.8.1",
+        "xml-loader": "^1.2.1"
+    },
+    "dependencies": {
+        "html2pdf.js": "^0.12.1",
+        "jspdf": "^3.0.3"
+    },
+    "version": "1.0.0",
+    "keywords": [],
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/dmytror52/chervonograd-bot-diia/issues"
+    },
+    "homepage": "https://github.com/dmytror52/chervonograd-bot-diia#readme",
+    "description": ""
+}

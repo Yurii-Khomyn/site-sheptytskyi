@@ -1,0 +1,11 @@
+# залежності — встановлюються через npm install
+node_modules/
+
+# зібраний сайт — генерується через npm run build
+dist/
+
+# службові файли
+.DS_Store
+*.log
+.idea/
+.vscode/

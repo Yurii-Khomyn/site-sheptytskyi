@@ -1,0 +1,107 @@
+@use '../../styles/vars' as *;
+@use '../../styles/typograpy' as *;
+
+.header {
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.15);
+
+    @media (min-width: $desktop) {
+        border-bottom: none;
+    }
+}
+
+.header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+
+    @media (min-width: $desktop) {
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+}
+
+.header__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header__logo {
+    width: 52px;
+    height: 52px;
+
+    @media (min-width: $desktop) {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+// підпис біля герба — лише на десктопі
+.header__brand-text {
+    display: none;
+    @include h8;
+
+    @media (min-width: $desktop) {
+        display: block;
+    }
+}
+
+.header__nav {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    @media (min-width: $desktop) {
+        flex: none;
+        gap: 36px;
+    }
+}
+
+.header__link {
+    @include h6;
+
+    @media (min-width: $desktop) {
+        @include h8;
+    }
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.header__bot {
+    min-height: 44px;
+    padding: 10px 22px;
+
+    @media (min-width: $desktop) {
+        min-height: 40px;
+        padding: 8px 20px;
+        @include h8;
+    }
+}
+
+// мобільний — «Telegram бот», десктоп — «Перейти до Telegram бота»
+.header__bot-long {
+    display: none;
+}
+
+@media (min-width: $desktop) {
+    .header__bot-long {
+        display: inline;
+    }
+
+    .header__bot-short {
+        display: none;
+    }
+}
+
+@media (max-width: 360px) {
+    .header__bot {
+        padding: 10px 14px;
+    }
+}

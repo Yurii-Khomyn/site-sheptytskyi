@@ -1,0 +1,16 @@
+@use '../../styles/typograpy' as *;
+
+.questions__inner {
+    max-width: 720px;
+}
+
+.questions__btn {
+    margin-top: 48px;
+
+    // на десктопі кнопка за шириною тексту
+    @media (min-width: $desktop) {
+        display: inline-flex;
+        width: auto;
+        padding: 12px 24px;
+    }
+}

@@ -1,0 +1,48 @@
+@use '../../styles/vars' as *;
+@use '../../styles/typograpy' as *;
+
+// кнопка-«пілюля» в стилі дизайн-системи «Дія»
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    @include body;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color $transition, color $transition, opacity $transition;
+}
+
+.button--block {
+    display: flex;
+    width: 100%;
+}
+
+.button--dark {
+    color: $white;
+    background-color: $black;
+    border: 1.5px solid $black;
+
+    &:hover {
+        opacity: 0.85;
+    }
+}
+
+.button--outline {
+    color: $black;
+    background-color: $white;
+    border: 1.5px solid $black;
+
+    &:hover:not(:disabled) {
+        color: $white;
+        background-color: $black;
+    }
+
+    &:disabled {
+        color: $disabled;
+        border-color: $disabled;
+        cursor: not-allowed;
+    }
+}

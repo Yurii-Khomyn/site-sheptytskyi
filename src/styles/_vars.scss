@@ -1,0 +1,27 @@
+// screen sizes
+$laptop: 1280px;
+$tablet: 992px;
+$phone: 480px;
+
+// colors
+$black: #000;
+$white: #fff;
+$muted: #8a8a8a;
+$disabled: #c8c8c8;
+$error: #e8471c;
+$blue: #8fb8e8;
+$green: #cfe5bf;
+$promo-bg: #e2ebf5;
+
+// gradients
+$gradient-top: linear-gradient(180deg, #8fb8e8 0%, #b6d3dd 55%, #d4e8b9 100%);
+$gradient-border: linear-gradient(180deg, $blue, $green);
+// десктоп: фіолетовий зліва вгорі, блакитний справа, персиковий зліва внизу, зелений по центру знизу
+$gradient-top-desktop: radial-gradient(60% 80% at 0% 0%, #b3a6e6 0%, transparent 70%),
+    radial-gradient(45% 70% at 0% 100%, #f0d2b0 0%, transparent 70%),
+    radial-gradient(50% 60% at 50% 100%, #cfe5b8 0%, transparent 75%),
+    radial-gradient(60% 90% at 100% 0%, #77acf5 0%, transparent 75%),
+    linear-gradient(180deg, #a9c3dd, #bcd9d6);
+$gradient-card: linear-gradient(120deg, #b9a8ef 0%, #e9e0b4 50%, #a6c6f6 100%);
+
+$transition: 0.2s ease-out;

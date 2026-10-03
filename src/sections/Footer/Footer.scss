@@ -1,0 +1,140 @@
+@use '../../styles/vars' as *;
+@use '../../styles/typograpy' as *;
+
+.footer {
+    padding: 56px 0 48px;
+    color: $white;
+    background-color: $black;
+
+    p {
+        margin-bottom: 16px;
+    }
+
+    @media (min-width: $desktop) {
+        padding: 72px 0 64px;
+    }
+}
+
+.footer__inner {
+    display: grid;
+    grid-template-areas: 'about' 'contacts' 'follow' 'dev';
+    gap: 40px;
+
+    @media (min-width: $tablet) {
+        grid-template-columns: 1.7fr 1fr 1fr;
+        grid-template-areas:
+            'about contacts follow'
+            'about dev dev';
+        gap: 48px 40px;
+    }
+}
+
+.footer__about {
+    grid-area: about;
+}
+
+.footer__contacts {
+    grid-area: contacts;
+}
+
+.footer__follow {
+    grid-area: follow;
+}
+
+.footer__dev {
+    grid-area: dev;
+
+    @media (min-width: $tablet) {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+
+        p {
+            max-width: 260px;
+            margin: 0;
+        }
+    }
+}
+
+// герби + назва: на десктопі — в один рядок
+.footer__brand {
+    @media (min-width: $tablet) {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+    }
+}
+
+.footer__logos {
+    display: flex;
+    flex: none;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.footer__logo {
+    width: 56px;
+    height: 56px;
+    border: 1.5px solid $white;
+    border-radius: 14px;
+}
+
+// тризуб чорний — інвертуємо для темного фону
+.footer__logo--trident {
+    border: none;
+    filter: invert(1);
+}
+
+.footer__muted {
+    color: $muted;
+}
+
+.footer__address {
+    margin: 32px 0 0;
+    font-style: normal;
+}
+
+.footer__title {
+    margin: 0 0 28px;
+    @include h6;
+}
+
+.footer__link:hover {
+    text-decoration: underline;
+}
+
+.footer__social {
+    display: flex;
+    gap: 12px;
+
+    svg {
+        display: block;
+        width: 36px;
+        height: 36px;
+    }
+}
+
+.footer__pfv {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    @include h6;
+    font-weight: 700;
+
+    @media (min-width: $tablet) {
+        margin: 0;
+    }
+}
+
+.footer__note {
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid #555;
+    @include small;
+
+    a {
+        text-decoration: underline;
+    }
+}

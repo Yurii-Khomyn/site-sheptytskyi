@@ -1,0 +1,143 @@
+@use '../../styles/vars' as *;
+@use '../../styles/typograpy' as *;
+
+.example {
+    background-color: $promo-bg;
+}
+
+// мобільний: текст → телефон → кнопка; десктоп: текст і кнопка ліворуч, телефон праворуч
+.example__inner {
+    @media (min-width: $desktop) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            'text media'
+            'btn media';
+        grid-template-rows: auto 1fr;
+        column-gap: 40px;
+    }
+}
+
+
+
+.example__text {
+    grid-area: text;
+    max-width: 560px;
+}
+
+.example__benefits {
+    display: none;
+
+    @media (min-width: $desktop) {
+        display: block;
+    }
+}
+
+.example__note {
+    margin-top: 32px;
+
+    @media (min-width: $desktop) {
+        margin-top: 0;
+    }
+}
+
+.example__subtitle {
+    margin: 32px 0 12px;
+    @include body;
+    font-weight: 500;
+}
+
+.example__list {
+    margin-bottom: 32px;
+
+    li {
+        position: relative;
+        padding-left: 24px;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 8px;
+            width: 5px;
+            height: 5px;
+            background-color: $black;
+            border-radius: 50%;
+        }
+    }
+}
+
+.example__btn {
+    grid-area: btn;
+    justify-self: start;
+    align-self: start;
+    width: 100%;
+    margin-top: 32px;
+
+    @media (min-width: $desktop) {
+        width: auto;
+        margin-top: 48px;
+    }
+}
+
+.example__media {
+    grid-area: media;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 48px;
+}
+
+// QR лише на десктопі
+.example__qr {
+    display: none;
+
+    @media (min-width: $tablet) {
+        display: block;
+    }
+}
+
+.example__qr-label {
+    margin-bottom: 8px;
+}
+
+.example__qr-img {
+    width: 160px;
+    height: 160px;
+    padding: 12px;
+    background-color: $white;
+    border-radius: 12px;
+}
+
+// телефон: на мобільному — нижня частина з повідомленнями бота, верх плавно зникає;
+// на десктопі — повністю
+.example__img {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    // видно нижню половину картинки (1076×1628), від дати в чаті
+    aspect-ratio: 1076 / 820;
+    margin: 32px auto 0;
+    overflow: hidden;
+    mask-image: linear-gradient(transparent, #000 20%);
+
+    img {
+        flex: none;
+        width: 100%;
+        height: auto;
+    }
+
+    @media (min-width: $desktop) {
+        flex: none;
+        width: 300px;
+        aspect-ratio: auto;
+        margin: 0;
+        mask-image: none;
+    }
+}
+
+// lazy-image після завантаження робить фон прозорим — для QR лишаємо білу підкладку
+.example__qr-img.image-loaded {
+    background-color: $white;
+    border-radius: 12px;
+}

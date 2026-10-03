@@ -1,0 +1,422 @@
+@use '../../styles/vars' as *;
+@use '../../styles/typograpy' as *;
+
+// === ФОРМА ПОШУКУ (на першому екрані) ===
+.debt__form {
+    display: flex;
+    align-items: center;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 6px 6px 6px 28px;
+    background-color: $white;
+    border-radius: 999px;
+}
+
+.debt__input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+    @include quote;
+    line-height: 24px;
+    background: none;
+    border: 0;
+    outline: 0;
+
+    &::placeholder {
+        color: $muted;
+    }
+
+    &:disabled {
+        color: $disabled;
+
+        &::placeholder {
+            color: $disabled;
+        }
+    }
+}
+
+.debt__submit {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 50px;
+    height: 50px;
+    background-color: $black;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color $transition;
+
+    &:hover:not(:disabled) {
+        background-color: #6b6b6b;
+    }
+
+    svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    &:disabled {
+        background-color: $disabled;
+        cursor: not-allowed;
+    }
+}
+
+// під час запиту замість лупи — спінер
+.debt__submit--loading {
+    svg {
+        display: none;
+    }
+
+    &::after {
+        content: '';
+        width: 20px;
+        height: 20px;
+        border: 2.5px solid rgba(255, 255, 255, 0.3);
+        border-top-color: $white;
+        border-radius: 50%;
+        animation: debt-modal-spin 0.8s linear infinite;
+    }
+}
+
+.debt__hint {
+    max-width: 560px;
+    margin: 16px auto 0;
+    @include small;
+}
+
+.debt__hint--error {
+    color: $error;
+}
+
+// === КАРТКА ІЗ ЗАБОРГОВАНІСТЮ ===
+.debt {
+    padding-top: 48px;
+}
+
+.debt__info {
+    max-width: 720px;
+}
+
+.debt__card {
+    // рамка-градієнт як у макеті
+    border: 2px solid transparent;
+    background: linear-gradient($white, $white) padding-box, $gradient-border border-box;
+}
+
+.debt__card-head {
+    padding: 24px;
+    border-bottom: 2px solid $blue;
+}
+
+.debt__card-name {
+    margin: 8px 0 24px;
+    @include h3;
+}
+
+.debt__card-label {
+    margin-bottom: 6px;
+}
+
+.debt__list {
+    padding: 8px 24px 24px;
+}
+
+.debt__tax {
+    padding-top: 32px;
+}
+
+.debt__tax-name {
+    margin-bottom: 6px;
+}
+
+.debt__tax-amount {
+    margin-bottom: 20px;
+    @include h5;
+}
+
+// === РЕКВІЗИТИ ===
+.debt__info-payment-details {
+    padding-top: 32px;
+}
+
+.debt__info-payment-details-list {
+    transition: $transition;
+    opacity: 0;
+}
+
+.debt__info-card {
+    padding: 24px;
+    border: 2px solid $black;
+}
+
+.debt__info-card-title {
+    margin-bottom: 16px;
+    @include h5;
+}
+
+.debt__info-card-type {
+    margin-top: 12px;
+}
+
+.debt__info-card-value {
+    font-weight: $regular;
+}
+
+.debt__info-card--payment {
+    border-top-width: 0;
+    border-bottom-style: dashed;
+
+    &:first-child {
+        border-top-width: 2px;
+    }
+
+    &:last-child {
+        border-bottom-style: solid;
+    }
+}
+
+.debt__pdf-button-container {
+    padding-top: 24px;
+    display: flex;
+    justify-content: center;
+}
+
+
+@media (max-width: $phone) {
+    .debt__pdf-download-btn {
+        width: 100%;
+    }
+}
+
+// === МОДАЛКА ВИБОРУ БАНКУ ===
+.debt__modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity $transition;
+}
+
+.debt__modal-overlay--open {
+    display: flex;
+    opacity: 1;
+}
+
+.debt__modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    width: min(420px, 92vw);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.debt__modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debt__modal-title {
+    margin: 0;
+    font-size: 18px;
+}
+
+.debt__modal-subtitle {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.debt__modal-close {
+    background: none;
+    border: 0;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    color: #555;
+    transition: color $transition;
+
+    &:hover {
+        color: #000;
+    }
+}
+
+.debt__modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.debt__modal-bank-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    transition: $transition;
+    text-align: left;
+
+    &:hover:not(:disabled) {
+        background: #f0f0f0;
+        border-color: #c8c8c8;
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.debt__modal-bank-option--loading {
+    opacity: 0.6;
+
+    &::after {
+        content: '';
+        width: 14px;
+        height: 14px;
+        margin-left: auto;
+        border: 2px solid #ccc;
+        border-top-color: #555;
+        border-radius: 50%;
+        animation: debt-modal-spin 0.8s linear infinite;
+    }
+}
+
+.debt__modal-bank-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.debt__modal-bank-label {
+    font-weight: 500;
+}
+
+.debt__modal-error {
+    margin: 0;
+    color: #c0392b;
+    font-size: 14px;
+
+    a {
+        color: #c0392b;
+        text-decoration: underline;
+    }
+}
+
+@keyframes debt-modal-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: $phone) {
+    .debt__modal {
+        padding: 16px;
+    }
+
+    .debt__modal-title {
+        font-size: 16px;
+    }
+}
+// === ДЕСКТОП ===
+@media (min-width: $desktop) {
+    // пошук компактніший
+    .debt__form {
+        max-width: 580px;
+        padding: 4px 6px 4px 24px;
+    }
+
+    .debt__input {
+        padding: 8px 0;
+        @include body;
+    }
+
+    .debt__submit {
+        width: 36px;
+        height: 36px;
+
+        svg {
+            width: 22px;
+            height: 22px;
+        }
+    }
+
+    .debt__hint {
+        margin-top: 12px;
+        @include h8;
+    }
+
+    .debt {
+        padding-top: 64px;
+    }
+
+    .debt__info {
+        max-width: none;
+    }
+
+    // картка у дві колонки: платник | податки
+    .debt__card {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr;
+        background: linear-gradient($white, $white) padding-box, $gradient-card border-box;
+    }
+
+    .debt__card-head {
+        padding: 32px 24px;
+        border-bottom: none;
+        border-right: 2px solid #e6dfb6;
+    }
+
+    .debt__card-name {
+        margin: 6px 0 20px;
+        @include h5;
+    }
+
+    .debt__list {
+        padding: 16px 24px 32px;
+    }
+
+    // рядок податку: текст ліворуч, кнопка праворуч
+    .debt__tax {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        column-gap: 24px;
+        padding-top: 16px;
+    }
+
+    .debt__tax-name {
+        margin-bottom: 2px;
+    }
+
+    .debt__tax-amount {
+        grid-column: 1;
+        margin-bottom: 0;
+        @include body;
+        font-weight: $regular;
+    }
+
+    .debt__pay-button.button--block {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        width: auto;
+        min-height: 32px;
+        padding: 4px 18px;
+        @include h8;
+    }
+
+    .debt__info-payment-details {
+        max-width: 480px;
+    }
+}

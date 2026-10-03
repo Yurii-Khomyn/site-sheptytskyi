@@ -1,0 +1,119 @@
+/* use 'font-display: swap' inside of the @font-face 
+(or 'font-display: block' if you need to show a text only with a particular font (blocks rendering)) */
+/* if possible, use woff2 fonts */
+/* example: 
+@font-face {
+    src: local('Awesome Font'), url('/fonts/awesome.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'Awesome Font';
+    font-style: normal;
+    font-weight: 400;
+}
+*/
+
+// regular text
+@font-face {
+    src: local('e-Ukraine-Thin'), url('./e-Ukraine/e-Ukraine-Thin.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine';
+    font-style: normal;
+    font-weight: 100;
+}
+
+@font-face {
+    src: local('e-Ukraine-UltraLight'), url('./e-Ukraine/e-Ukraine-UltraLight.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine';
+    font-style: normal;
+    font-weight: 200;
+}
+
+@font-face {
+    src: local('e-Ukraine-Light'), url('./e-Ukraine/e-Ukraine-Light.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine';
+    font-style: normal;
+    font-weight: 300;
+}
+
+@font-face {
+    src: local('e-Ukraine-Regular'), url('./e-Ukraine/e-Ukraine-Regular.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine';
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    src: local('e-Ukraine-Medium'), url('./e-Ukraine/e-Ukraine-Medium.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine';
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face {
+    src: local('e-Ukraine-Bold'), url('./e-Ukraine/e-Ukraine-Bold.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine';
+    font-style: normal;
+    font-weight: 700;
+}
+
+// headings
+@font-face {
+    src: local('e-UkraineHead-Thin'), url('./e-UkraineHead/e-UkraineHead-Thin.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head';
+    font-style: normal;
+    font-weight: 100;
+}
+
+@font-face {
+    src: local('e-UkraineHead-UltraLight'), url('./e-UkraineHead/e-UkraineHead-UltraLight.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head';
+    font-style: normal;
+    font-weight: 200;
+}
+
+@font-face {
+    src: local('e-UkraineHead-Light'), url('./e-UkraineHead/e-UkraineHead-Light.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head';
+    font-style: normal;
+    font-weight: 300;
+}
+
+@font-face {
+    src: local('e-UkraineHead-Regular'), url('./e-UkraineHead/e-UkraineHead-Regular.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head';
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    src: local('e-UkraineHead-Medium'), url('./e-UkraineHead/e-UkraineHead-Medium.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head';
+    font-style: normal;
+    font-weight: 500;
+}
+
+@font-face {
+    src: local('e-UkraineHead-Bold'), url('./e-UkraineHead/e-UkraineHead-Bold.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head';
+    font-style: normal;
+    font-weight: 700;
+}
+
+// логотипний варіант — окрема назва, щоб не перекривав звичайний e-Ukraine Head 400
+@font-face {
+    src: local('e-UkraineHead-LOGO'), url('./e-UkraineHead/e-UkraineHead-LOGO.woff2') format('woff2');
+    font-display: swap;
+    font-family: 'e-Ukraine Head LOGO';
+    font-style: normal;
+    font-weight: 400;
+}

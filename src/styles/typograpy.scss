@@ -1,0 +1,64 @@
+@use '../styles/vars' as *;
+
+// Типографіка за макетом (дизайн-система «Дія»): розмір / висота рядка / насиченість.
+// Мобільні значення вмикаються на екранах до $mobile.
+$mobile: 767px;
+$desktop: 768px;
+$regular: 400;
+$light: 300;
+
+@mixin text($size, $line, $weight: $regular) {
+    font-size: $size;
+    line-height: $line;
+    font-weight: $weight;
+}
+
+@mixin h1 { @include text(56px, 60px); @media (max-width: $mobile) { @include text(26px, 28px); } }
+@mixin h2 { @include text(38px, 40px); @media (max-width: $mobile) { @include text(20px, 24px); } }
+@mixin h3 { @include text(28px, 32px); @media (max-width: $mobile) { @include text(18px, 24px); } }
+@mixin h4 { @include text(24px, 28px); @media (max-width: $mobile) { @include text(16px, 24px); } }
+@mixin h5 { @include text(20px, 24px); @media (max-width: $mobile) { @include text(14px, 20px); } }
+@mixin h6 { @include text(18px, 28px); @media (max-width: $mobile) { @include text(13px, 18px); } }
+@mixin h7 { @include text(16px, 24px, $light); @media (max-width: $mobile) { @include text(13px, 18px, $light); } }
+
+@mixin h8 { @include text(13px, 18px); }
+
+@mixin body { @include text(16px, 24px, $light); }
+@mixin small { @include text(13px, 18px, $light); }
+@mixin quote { @include text(20px, 32px, $light); }
+
+// title
+.title {
+    margin-bottom: 20px;
+    @include h2;
+}
+
+// на мобільному — більший заголовок (H1), на десктопі — як звичайний (H2)
+.title--lg {
+    @media (max-width: $mobile) {
+        @include h1;
+    }
+}
+
+// paragraph
+.paragraph {
+    max-width: 800px;
+    @include body;
+
+    & + .paragraph {
+        margin-top: 24px;
+    }
+
+    &.paragraph--sm {
+        @include small;
+    }
+}
+
+// link
+.link {
+    text-decoration: underline;
+
+    &:hover {
+        text-decoration: none;
+    }
+}

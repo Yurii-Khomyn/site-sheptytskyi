@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Місцеві податки — Шептицька громада</title>
+    <!-- meta info -->
+    <%= require('html-loader!../../sections/MetaInfo/MetaInfo.html').default %>
+    <!-- loading screen styles -->
+    <%= require('html-loader!../../sections/LoadingScreen/LoadingScreenStyles.html').default %>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0N3N93F10Y" nonce="**CSP_NONCE**"></script>
+      <script nonce="**CSP_NONCE**">
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-0N3N93F10Y');
+      </script>
+</head>
+
+<body>
+    <!-- show the loading screen while the page is loading -->
+    <%= require('html-loader!../../sections/LoadingScreen/LoadingScreen.html').default %>
+    <!-- website content -->
+    <div class="top">
+        <%= require('html-loader!../../sections/Header/Header.html').default %>
+        <main class="main">
+            <%= require('html-loader!../../sections/Intro/Intro.html').default %>
+        </main>
+    </div>
+    <%= require('html-loader!../../sections/Debt/Debt.html').default %>
+    <%= require('html-loader!../../sections/Questions/Questions.html').default %>
+    <%= require('html-loader!../../sections/Tools/Tools.html').default %>
+    <%= require('html-loader!../../sections/Examples/Examples.html').default %>
+    <%= require('html-loader!../../sections/Footer/Footer.html').default %>
+</body>
+
+</html>

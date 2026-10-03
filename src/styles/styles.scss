@@ -1,0 +1,104 @@
+@use './_vars.scss' as *;
+@use './typograpy.scss' as typo;
+
+*,
+*::before,
+*::after {
+    /* reset default styles */
+    margin: 0;
+    padding: 0;
+    text-decoration: none;
+    list-style: none;
+    /* set common styles */
+    color: inherit;
+    font-family: 'e-Ukraine', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    text-wrap: balance;
+}
+
+// selected text
+::selection {
+    color: $white;
+    background-color: $black;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    @include typo.body;
+    display: flex;
+    flex-direction: column;
+    color: $black;
+    background-color: $white;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+// general <section>
+.section {
+    padding: 72px 0;
+}
+
+// main size container
+.container {
+    width: 100%;
+    max-width: 1376px;
+    margin: 0 auto;
+    padding: 0 80px;
+}
+
+// ширший контейнер для шапки
+.container--wide {
+    max-width: 1440px;
+    padding: 0 64px;
+}
+
+// top part of the page: header + intro on the gradient
+.top {
+    background: $gradient-top;
+
+    @media (min-width: typo.$desktop) {
+        background: $gradient-top-desktop;
+    }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+// screen adaptation
+// tablet
+@media (max-width: $tablet) {
+    // main size container
+    .container,
+    .container--wide {
+        padding: 0 40px;
+    }
+}
+
+// phone
+@media (max-width: $phone) {
+    // main size container
+    .container,
+    .container--wide {
+        padding: 0 16px;
+    }
+}
+
+.hidden-section {
+    display: none !important;
+}

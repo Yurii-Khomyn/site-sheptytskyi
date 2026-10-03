@@ -1,0 +1,23 @@
+<section class="intro" id="top">
+    <div class="container">
+        <div class="intro__inner">
+            <div class="intro__logos">
+                <img src="../../assets/images/logotypes/trident.svg" alt="Герб України" class="intro__logo" width="80" height="80">
+                <img src="../../assets/images/logotypes/logo-bw.svg" alt="Герб Шептицької громади" class="intro__logo" width="80" height="80">
+            </div>
+            <h1 class="intro__title">Перевірка та сплата місцевих податків онлайн</h1>
+            <p class="intro__text">
+                Перевірте наявність заборгованості, ввівши ваше прізвище, ім’я та по батькові, та сплатіть її зручним способом — онлайн або через Telegram-бот.
+            </p>
+            <!-- форма пошуку боргу; логіка — у sections/Debt/Debt.js -->
+            <form class="debt__form" novalidate>
+                <label for="debt_input" class="visually-hidden">Прізвище ім’я по-батькові</label>
+                <input type="text" class="debt__input" placeholder="Прізвище ім’я по-батькові" id="debt_input" autocomplete="name" aria-describedby="debt_hint" required>
+                <button type="submit" class="debt__submit" title="Пошук" aria-label="Перевірити заборгованість">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.3312 16.1522L15.7179 15.7074C16.5209 14.6868 17 13.3994 17 12C17 8.68629 14.3137 6 11 6C7.68629 6 5 8.68629 5 12C5 15.3137 7.68629 18 11 18C12.7024 18 14.2391 17.291 15.3312 16.1522ZM17.7252 16.3344L21.3981 19.5271L20.0133 21.1201L16.3569 17.9417C14.9388 19.2211 13.0604 20 11 20C6.58172 20 3 16.4183 3 12C3 7.58172 6.58172 4 11 4C15.4183 4 19 7.58172 19 12C19 13.5974 18.5318 15.0854 17.7252 16.3344Z" fill="white" /></svg>
+                </button>
+            </form>
+            <p class="debt__hint" id="debt_hint" aria-live="polite">Дані використовуються для перевірки заборгованості.</p>
+        </div>
+    </div>
+</section>
