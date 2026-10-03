@@ -1,5 +1,5 @@
 {
-    "name": "chervonograd-bot-diia",
+    "name": "site-sheptytskyi",
     "main": "src/pages/Home/Home.js",
     "scripts": {
         "start": "webpack serve --open --config webpack.dev.js",
@@ -7,9 +7,9 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/dmytror52/chervonograd-bot-diia.git"
+        "url": "git+https://github.com/Yurii-Khomyn/site-sheptytskyi.git"
     },
-    "author": "dmytror52",
+    "author": "Yurii Khomyn",
     "browserslist": ">= 0.5%, last 2 major versions, not dead, Chrome >= 60, Firefox >= 60, Firefox ESR, iOS >= 12, Safari >= 12, not Explorer <= 11",
     "devDependencies": {
         "@babel/core": "^7.17.9",
@@ -32,6 +32,7 @@
         "webpack": "^5.72.0",
         "webpack-cli": "^5.0.1",
         "webpack-dev-server": "^4.8.1",
+        "webpack-merge": "^5.10.0",
         "xml-loader": "^1.2.1"
     },
     "dependencies": {
@@ -42,8 +43,9 @@
     "keywords": [],
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/dmytror52/chervonograd-bot-diia/issues"
+        "url": "https://github.com/Yurii-Khomyn/site-sheptytskyi/issues"
     },
-    "homepage": "https://github.com/dmytror52/chervonograd-bot-diia#readme",
-    "description": ""
+    "homepage": "https://github.com/Yurii-Khomyn/site-sheptytskyi#readme",
+    "description": "Портал місцевих податків Шептицької громади: перевірка та сплата місцевих податків онлайн",
+    "private": true
 }
