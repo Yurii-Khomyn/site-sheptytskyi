@@ -72,7 +72,6 @@ npm run build   # зібрати сайт у папку dist/ для хости�
 Шукайте в коді позначки `TODO` і заглушки `#`:
 
 - посилання на Е-кабінет платника: `Questions.html`;
-- три посилання в «Інструментах»: `Tools.html`;
-- посилання на PayForVictory: `Footer.html`.
+- три посилання в «Інструментах»: `Tools.html`.
 
-Уже вставлені: Telegram-бот (`t.me/debtorcitybot`), Telegram-канал, Facebook, YouTube та Instagram ради, адреса у футері веде на Google Карти.
+Уже вставлені: Telegram-бот (`t.me/debtorcitybot`), Telegram-канал, Facebook, YouTube та Instagram ради, PayForVictory (`p4v.com.ua`), адреса у футері веде на Google Карти.
