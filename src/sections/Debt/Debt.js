@@ -688,6 +688,13 @@ const showValidation = (final) => {
 }
 
 inputText.addEventListener('input', () => {
+    // усі введені літери — великі (ШЕПТИЦЬКИЙ АНДРЕЙ ІВАНОВИЧ); курсор лишаємо на місці
+    const upper = inputText.value.toLocaleUpperCase('uk')
+    if (upper !== inputText.value) {
+        const { selectionStart, selectionEnd } = inputText
+        inputText.value = upper
+        inputText.setSelectionRange(selectionStart, selectionEnd)
+    }
     if (!sendData.confirm) sendData.value = inputText.value
     else sendData.ident = inputText.value
     updateSubmitState()
