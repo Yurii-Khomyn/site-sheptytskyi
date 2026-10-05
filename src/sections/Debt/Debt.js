@@ -113,13 +113,12 @@ const buildMockDebt = (name, birthDateISO, identification, date, debts = {}) => 
 
 const normalizePib = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase()
 
-// ПІБ для показу й документів: кожне слово (і кожна частина подвійного прізвища) — з великої,
-// решта — малі; після апострофа літера лишається малою (Дем’янчук). «тирко НАДІЯ» → «Тирко Надія»
+// ПІБ для показу й документів: усі літери великі, зайві пробіли прибрано.
+// «  тирко НАДІЯ михайлівна» → «ТИРКО НАДІЯ МИХАЙЛІВНА»
 const formatPersonName = (s) => (s || '')
     .trim()
     .replace(/\s+/g, ' ')
-    .toLocaleLowerCase('uk')
-    .replace(/(^|[\s-])(\S)/g, (_, sep, letter) => sep + letter.toLocaleUpperCase('uk'))
+    .toLocaleUpperCase('uk')
 
 // Дата народження: ввід ДД.ММ.РРРР (або Д.М.РРРР, через . / -) -> ISO yyyy-mm-dd,
 // бо бекенд зберігає/звіряє identification у форматі yyyy-mm-dd. Якщо вже ISO/не дата — як є.
@@ -215,7 +214,7 @@ const fetchData = async (inputData, url) => {
         }
 
         const data = await info.json()
-        // як би людина не ввела ПІБ, у картці, реквізитах і PDF воно буде в правильному регістрі
+        // як би людина не ввела ПІБ, у картці, реквізитах і PDF воно буде великими літерами
         if (data?.data?.name && typeof data.data.name === 'string') {
             data.data.name = formatPersonName(data.data.name)
         }
@@ -688,7 +687,7 @@ const showValidation = (final) => {
 }
 
 // у полі ПІБ лишається таким, як його ввела людина; у картці, реквізитах і PDF
-// воно показується правильно — кожне слово з великої (див. formatPersonName)
+// воно показується великими літерами (див. formatPersonName)
 inputText.addEventListener('input', () => {
     if (!sendData.confirm) sendData.value = inputText.value
     else sendData.ident = inputText.value
