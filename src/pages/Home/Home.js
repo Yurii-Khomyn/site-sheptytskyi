@@ -24,6 +24,7 @@ import 'Sections/Footer/Footer.scss';
 // екрана (градієнт → його низ, футер → чорний тощо), для смуги під нижньою панеллю.
 // ============================================================
 const safariTopTint = document.querySelector('.safari-top-tint');
+const topSection = document.querySelector('.top');
 const GRADIENT_TOP = '#8fb8e8';
 const GRADIENT_BOTTOM = '#d4e8b9';
 
@@ -53,9 +54,11 @@ const updateSafariTints = () => {
     tintFrame = 0;
     const atTop = window.scrollY <= 4;
     safariTopTint?.classList.toggle('is-hidden', !atTop);
-    // на самому верху — колір верху градієнта: частина версій Safari фарбує ним смугу під годинником;
-    // після прокрутки — колір секції біля нижнього краю (для смуги під нижньою панеллю)
-    const color = atTop ? GRADIENT_TOP : sectionColorAtBottom();
+    // поки на екрані видно хоч частину першого екрана — колір верху градієнта: Safari фарбує ним
+    // смугу під годинником і показує його, коли сторінку «відтягує» вгорі при швидкій прокрутці;
+    // далі — колір секції біля нижнього краю (для смуги під нижньою панеллю)
+    const heroVisible = (topSection?.getBoundingClientRect().bottom ?? 0) > 0;
+    const color = heroVisible ? GRADIENT_TOP : sectionColorAtBottom();
     if (color) {
         document.documentElement.style.backgroundColor = color;
         document.body.style.backgroundColor = color;
