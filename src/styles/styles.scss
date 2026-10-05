@@ -108,28 +108,48 @@ img {
 }
 
 // top part of the page: header + intro on the gradient
-// градієнт на весь перший екран: шапка зверху, одразу під нею — перший екран,
-// решта висоти — градієнт (не центруємо: у Safari висота екрана включає зону під нижньою панеллю).
-// lvh — повна висота екрана, разом із зоною під напівпрозорими панелями Safari (iOS 26),
-// щоб градієнт ішов і під ними; vh — запасний варіант для старих браузерів
+// Перший екран на всю видиму висоту (svh — без панелей браузера; vh — запасний варіант).
+// Вміст стоїть трохи вище центру: вільне місце ділимо 2:3 (над вмістом : під ним).
+// На телефоні градієнт іде ще нижче видимої частини (::after), щоб тягнутися й під
+// напівпрозорою нижньою панеллю Safari (iOS 26); на розташування вмісту це не впливає.
 .top {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    min-height: 100lvh;
+    min-height: 100svh;
     background: $gradient-top;
 
     @media (min-width: typo.$desktop) {
         background: $gradient-top-desktop;
     }
 
-    // телефон: градієнт трохи довший за екран, щоб він тягнувся й під нижньою панеллю Safari
     @media (max-width: typo.$mobile) {
         min-height: calc(100lvh + 120px);
+
+        &::after {
+            content: '';
+            flex: none;
+            height: calc(100lvh - 100svh + 120px);
+        }
     }
 
     .main {
+        display: flex;
         flex: 1;
+        flex-direction: column;
+
+        &::before,
+        &::after {
+            content: '';
+        }
+
+        &::before {
+            flex: 2;
+        }
+
+        &::after {
+            flex: 3;
+        }
     }
 }
 

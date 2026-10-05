@@ -7,7 +7,10 @@ $phone: 480px;
 $black: #000;
 $white: #fff;
 $muted: #8a8a8a;
-$disabled: #c8c8c8;
+$disabled: #c8c8c8; // рамки й фон неактивних елементів
+// текст — з контрастом не нижче 4.5:1 на білому (WCAG AA)
+$placeholder: #6b6b6b;
+$disabled-text: #767676;
 $error: #e8471c;
 $blue: #8fb8e8;
 $green: #cfe5bf;

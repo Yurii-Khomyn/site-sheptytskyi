@@ -40,8 +40,9 @@
         background-color: $black;
     }
 
+    // неактивна: світла рамка, але текст читається (контраст 4.5:1)
     &:disabled {
-        color: $disabled;
+        color: $disabled-text;
         border-color: $disabled;
         cursor: not-allowed;
     }

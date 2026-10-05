@@ -24,14 +24,14 @@
     outline: 0;
 
     &::placeholder {
-        color: $muted;
+        color: $placeholder;
     }
 
     &:disabled {
-        color: $disabled;
+        color: $disabled-text;
 
         &::placeholder {
-            color: $disabled;
+            color: $disabled-text;
         }
     }
 }
@@ -151,6 +151,11 @@
 // === РЕКВІЗИТИ ===
 .debt__info-payment-details {
     padding-top: 32px;
+}
+
+// реквізити вже відкрито — кнопка більше не потрібна
+.debt__info-payment-details-btn:disabled {
+    display: none;
 }
 
 .debt__info-payment-details-list {

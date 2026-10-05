@@ -32,14 +32,15 @@ $light: 300;
 @mixin h2 { @include text(38px, 40px); @include mobile(20px, 26px, 1.2); }
 @mixin h3 { @include text(28px, 32px); @include mobile(18px, 22px, 1.3); }
 @mixin h4 { @include text(24px, 28px); @include mobile(16px, 20px, 1.35); }
-@mixin h5 { @include text(20px, 24px); @include mobile(14px, 18px, 1.4); }
-@mixin h6 { @include text(18px, 28px); @include mobile(13px, 16px, 1.4); }
-@mixin h7 { @include text(16px, 24px, $light); @include mobile(13px, 16px, 1.4, $light); }
+@mixin h5 { @include text(20px, 24px); @include mobile(16px, 18px, 1.4); }
+// мінімальний розмір тексту — 14–15px (у таблиці типографіки 13px), щоб добре читалося на всіх екранах
+@mixin h6 { @include text(18px, 28px); @include mobile(15px, 17px, 1.4); }
+@mixin h7 { @include text(16px, 24px, $light); @include mobile(15px, 17px, 1.4, $light); }
 
-@mixin h8 { @include text(13px, 18px); }
+@mixin h8 { @include text(14px, 20px); }
 
 @mixin body { @include text(16px, 24px, $light); @include mobile(16px, 18px, 1.5, $light); }
-@mixin small { @include text(13px, 18px, $light); @include mobile(13px, 14px, 1.4, $light); }
+@mixin small { @include text(14px, 20px, $light); @include mobile(14px, 15px, 1.4, $light); }
 @mixin quote { @include text(20px, 32px, $light); }
 
 // title
