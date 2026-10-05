@@ -19,10 +19,12 @@ import 'Sections/Footer/Footer.scss';
 // ============================================================
 // Смуги Safari на iPhone (iOS 26) — див. коментар у styles.scss.
 // Верх: синя смужка .safari-top-tint, лише поки сторінка на самому верху.
-// Низ: Safari фарбує смугу під нижньою панеллю кольором фону сторінки, тож підставляємо
-// колір секції, яка зараз біля нижнього краю екрана (градієнт → його низ, футер → чорний тощо).
+// Фон сторінки: на самому верху — колір верху градієнта (частина версій Safari фарбує ним
+// смугу під годинником, ігноруючи смужку); після прокрутки — колір секції біля нижнього краю
+// екрана (градієнт → його низ, футер → чорний тощо), для смуги під нижньою панеллю.
 // ============================================================
 const safariTopTint = document.querySelector('.safari-top-tint');
+const GRADIENT_TOP = '#8fb8e8';
 const GRADIENT_BOTTOM = '#d4e8b9';
 
 const isFixedLayer = (el) => {
@@ -49,8 +51,11 @@ const sectionColorAtBottom = () => {
 let tintFrame = 0;
 const updateSafariTints = () => {
     tintFrame = 0;
-    safariTopTint?.classList.toggle('is-hidden', window.scrollY > 4);
-    const color = sectionColorAtBottom();
+    const atTop = window.scrollY <= 4;
+    safariTopTint?.classList.toggle('is-hidden', !atTop);
+    // на самому верху — колір верху градієнта: частина версій Safari фарбує ним смугу під годинником;
+    // після прокрутки — колір секції біля нижнього краю (для смуги під нижньою панеллю)
+    const color = atTop ? GRADIENT_TOP : sectionColorAtBottom();
     if (color) {
         document.documentElement.style.backgroundColor = color;
         document.body.style.backgroundColor = color;
