@@ -233,7 +233,7 @@ const fetchData = async (inputData, url) => {
         // ПІБ лишаємо в полі (як на макеті); очищаємо лише для кроку з датою народження і після нього
         if (sendData.confirm || url === '/confirm') inputText.value = ""
         inputText.disabled = false
-        btnSubmit.disabled = false
+        updateSubmitState()
     }
 }
 
@@ -630,25 +630,90 @@ function closePaymentModal() {
 }
 
 
-inputText.addEventListener('change', (e) => {
-    if (!sendData.confirm) {
-        sendData.value = e.target.value
-    } else {
-        sendData.ident = e.target.value
+// ============================================================
+// ВАЛІДАЦІЯ ПОЛЯ ПОШУКУ
+// ПІБ: лише українські літери, апостроф і дефіс; рівно три слова, кожне — від 2 літер.
+// Крок уточнення: дата народження ДД.ММ.РРРР.
+// Під час введення показуємо лише помилки, які вже точно є (зайві символи, забагато слів);
+// «незавершене» (менше трьох слів, коротке слово) — лише після виходу з поля або спроби пошуку.
+// Кнопка пошуку неактивна, поки значення не валідне.
+// ============================================================
+const UA = 'А-ЩЬЮЯЄІЇҐа-щьюяєіїґ'
+const APOSTROPHES = '\'’ʼ`'
+const NAME_CHARS = new RegExp(`^[${UA}${APOSTROPHES}\\-\\s]*$`)
+// слово: літери, всередині — апостроф (Дем’янчук) або дефіс (Петренко-Іваненко)
+const NAME_WORD = new RegExp(`^[${UA}]+(?:[${APOSTROPHES}-][${UA}]+)*$`)
+
+const validateName = (value, final) => {
+    const name = value.trim().replace(/\s+/g, ' ')
+    if (!name) return final ? 'Введіть прізвище, ім’я та по батькові.' : ''
+    if (!NAME_CHARS.test(value)) return 'Використовуйте лише українські літери, апостроф і дефіс.'
+    const words = name.split(' ')
+    if (words.length > 3) return 'Введіть лише три слова: прізвище, ім’я та по батькові.'
+    if (!final) return ''
+    if (words.length < 3) return 'Введіть прізвище, ім’я та по батькові — три слова.'
+    if (words.some((w) => w.replace(new RegExp(`[${APOSTROPHES}-]`, 'g'), '').length < 2)) {
+        return 'Кожне слово має містити щонайменше 2 літери.'
+    }
+    if (!words.every((w) => NAME_WORD.test(w))) return 'Апостроф і дефіс можуть стояти лише між літерами.'
+    return ''
+}
+
+const validateBirthDate = (value, final) => {
+    const date = value.trim()
+    if (!date) return final ? 'Введіть дату народження у форматі ДД.ММ.РРРР.' : ''
+    if (/[^\d./-]/.test(date)) return 'Дату вводьте цифрами у форматі ДД.ММ.РРРР.'
+    if (!final) return ''
+    const m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(date)
+    if (!m) return 'Введіть дату народження у форматі ДД.ММ.РРРР.'
+    const [d, mo, y] = [Number(m[1]), Number(m[2]), Number(m[3])]
+    const parsed = new Date(y, mo - 1, d)
+    const exists = parsed.getFullYear() === y && parsed.getMonth() === mo - 1 && parsed.getDate() === d
+    if (!exists || y < 1900 || parsed > new Date()) return 'Такої дати народження не може бути. Перевірте, будь ласка.'
+    return ''
+}
+
+const validateInput = (final) => (sendData.confirm ? validateBirthDate : validateName)(inputText.value, final)
+
+// кнопка активна лише для валідного значення і не під час запиту
+function updateSubmitState() {
+    btnSubmit.disabled = state.status === statuses.Pending || validateInput(true) !== ''
+}
+
+const showValidation = (final) => {
+    const error = validateInput(final)
+    if (error) setHint(error, true)
+    else setHint(sendData.confirm ? 'Введіть дату народження у форматі ДД.ММ.РРРР.' : DEFAULT_HINT)
+    return error
+}
+
+inputText.addEventListener('input', () => {
+    if (!sendData.confirm) sendData.value = inputText.value
+    else sendData.ident = inputText.value
+    updateSubmitState()
+    showValidation(false)
+})
+
+// вийшли з поля — показуємо й «незавершені» помилки (якщо щось введено)
+inputText.addEventListener('blur', () => {
+    if (inputText.value.trim()) showValidation(true)
+})
+
+// Enter при неактивній кнопці форма не відправляє — пояснюємо, що не так
+inputText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && btnSubmit.disabled && state.status !== statuses.Pending) {
+        e.preventDefault()
+        showValidation(true)
     }
 })
 
+updateSubmitState()
+
 submitForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const userText = sendData.value?.split(' ')?.filter(el => el)
+    if (state.status === statuses.Pending || showValidation(true)) return
     if (!sendData.confirm) {
-        if (userText.length >= 3 && sendData.value?.length > 10) {
-            await fetchData({ username: sendData.value }, '/info')
-        } else {
-            state.status = statuses.Error
-            state.error = "Будь ласка, введіть Ваше прізвище, ім’я та по батькові повністю."
-            updateUI()
-        }
+        await fetchData({ username: sendData.value.trim().replace(/\s+/g, ' ') }, '/info')
     } else {
         // Нормалізуємо введену дату народження ДД.ММ.РРРР -> yyyy-mm-dd для звірки на бекенді
         await fetchData({ username: sendData.value, ident: toISODate(sendData.ident) }, '/confirm')

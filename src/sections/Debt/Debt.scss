@@ -16,7 +16,8 @@
     flex: 1;
     min-width: 0;
     padding: 12px 0;
-    @include quote;
+    // мобільний: 16px на вузьких телефонах → 20px на великих, щоб плейсхолдер влазив
+    @include h4;
     line-height: 24px;
     background: none;
     border: 0;
@@ -76,6 +77,18 @@
         border-top-color: $white;
         border-radius: 50%;
         animation: debt-modal-spin 0.8s linear infinite;
+    }
+}
+
+// найвужчі телефони (320px і менше): трохи менші відступи й кнопка, щоб поле було ширшим
+@media (max-width: 359px) {
+    .debt__form {
+        padding-left: 18px;
+    }
+
+    .debt__submit {
+        width: 44px;
+        height: 44px;
     }
 }
 

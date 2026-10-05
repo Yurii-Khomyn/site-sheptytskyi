@@ -1,3 +1,4 @@
+@use 'sass:math';
 @use '../styles/vars' as *;
 
 // Типографіка за макетом (дизайн-система «Дія»): розмір / висота рядка / насиченість.
@@ -13,18 +14,32 @@ $light: 300;
     font-weight: $weight;
 }
 
-@mixin h1 { @include text(56px, 60px); @media (max-width: $mobile) { @include text(26px, 28px); } }
-@mixin h2 { @include text(38px, 40px); @media (max-width: $mobile) { @include text(20px, 24px); } }
-@mixin h3 { @include text(28px, 32px); @media (max-width: $mobile) { @include text(18px, 24px); } }
-@mixin h4 { @include text(24px, 28px); @media (max-width: $mobile) { @include text(16px, 24px); } }
-@mixin h5 { @include text(20px, 24px); @media (max-width: $mobile) { @include text(14px, 20px); } }
-@mixin h6 { @include text(18px, 28px); @media (max-width: $mobile) { @include text(13px, 18px); } }
-@mixin h7 { @include text(16px, 24px, $light); @media (max-width: $mobile) { @include text(13px, 18px, $light); } }
+// Мобільний розмір, що плавно росте з шириною екрана:
+// $min на телефонах до 375px (значення з таблиці типографіки) → $max на 440px і ширше (великі телефони).
+@function fluid($min, $max) {
+    @return clamp(#{$min}, calc(#{$min} + #{math.div($max - $min, 1px)} * ((100vw - 375px) / 65)), #{$max});
+}
+
+@mixin mobile($min, $max, $line, $weight: $regular) {
+    @media (max-width: $mobile) {
+        font-size: fluid($min, $max);
+        line-height: $line;
+        font-weight: $weight;
+    }
+}
+
+@mixin h1 { @include text(56px, 60px); @include mobile(26px, 32px, 1.1); }
+@mixin h2 { @include text(38px, 40px); @include mobile(20px, 26px, 1.2); }
+@mixin h3 { @include text(28px, 32px); @include mobile(18px, 22px, 1.3); }
+@mixin h4 { @include text(24px, 28px); @include mobile(16px, 20px, 1.35); }
+@mixin h5 { @include text(20px, 24px); @include mobile(14px, 18px, 1.4); }
+@mixin h6 { @include text(18px, 28px); @include mobile(13px, 16px, 1.4); }
+@mixin h7 { @include text(16px, 24px, $light); @include mobile(13px, 16px, 1.4, $light); }
 
 @mixin h8 { @include text(13px, 18px); }
 
-@mixin body { @include text(16px, 24px, $light); }
-@mixin small { @include text(13px, 18px, $light); }
+@mixin body { @include text(16px, 24px, $light); @include mobile(16px, 18px, 1.5, $light); }
+@mixin small { @include text(13px, 18px, $light); @include mobile(13px, 14px, 1.4, $light); }
 @mixin quote { @include text(20px, 32px, $light); }
 
 // title
