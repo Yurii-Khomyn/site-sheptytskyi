@@ -63,11 +63,24 @@ img {
 }
 
 // top part of the page: header + intro on the gradient
+// градієнт на весь перший екран: шапка зверху, перший екран — по центру решти висоти.
+// svh — видима висота без панелей браузера на телефоні; vh — запасний варіант для старих браузерів
 .top {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100svh;
     background: $gradient-top;
 
     @media (min-width: typo.$desktop) {
         background: $gradient-top-desktop;
+    }
+
+    .main {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
     }
 }
 
