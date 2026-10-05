@@ -25,11 +25,56 @@ html {
     scroll-behavior: smooth;
 }
 
+// Фон сторінки — колір верху градієнта: Safari на iPhone фарбує ним смугу під годинником
+// (theme-color у Safari 26 не діє). Секції нижче першого екрана мають власний білий фон.
+// Safari на iPhone (iOS 26) фарбує смуги під годинником і під нижньою панеллю кольором фону
+// сторінки (theme-color не діє). Фон — колір верху градієнта, щоб смуга біля шапки не була білою.
+// Секції нижче першого екрана мають власний білий фон.
+// Safari на iPhone (iOS 26) сам фарбує смуги під годинником і під нижньою панеллю:
+// нижню — кольором фону сторінки (тут — низ градієнта, зелений),
+// верхню — кольором закріпленого елемента біля верхнього краю (.safari-top-tint, синій — верх градієнта).
+// Елемент лежить під вмістом сторінки, тож його не видно.
+html,
+body {
+    background-color: #d4e8b9;
+}
+
+.safari-top-tint {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 0;
+    height: 24px;
+    background-color: $blue;
+    pointer-events: none;
+
+    // прокрутили — прибираємо, щоб смуга під годинником не лишалась синьою над рештою сторінки
+    &.is-hidden {
+        display: none;
+    }
+}
+
+.top,
+.debt,
+.questions,
+.tools,
+.example,
+.footer {
+    position: relative;
+    z-index: 1;
+}
+
 body {
     @include typo.body;
     display: flex;
     flex-direction: column;
     color: $black;
+}
+
+.debt,
+.questions,
+.tools {
     background-color: $white;
 }
 
@@ -63,24 +108,28 @@ img {
 }
 
 // top part of the page: header + intro on the gradient
-// градієнт на весь перший екран: шапка зверху, перший екран — по центру решти висоти.
-// svh — видима висота без панелей браузера на телефоні; vh — запасний варіант для старих браузерів
+// градієнт на весь перший екран: шапка зверху, одразу під нею — перший екран,
+// решта висоти — градієнт (не центруємо: у Safari висота екрана включає зону під нижньою панеллю).
+// lvh — повна висота екрана, разом із зоною під напівпрозорими панелями Safari (iOS 26),
+// щоб градієнт ішов і під ними; vh — запасний варіант для старих браузерів
 .top {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    min-height: 100svh;
+    min-height: 100lvh;
     background: $gradient-top;
 
     @media (min-width: typo.$desktop) {
         background: $gradient-top-desktop;
     }
 
+    // телефон: градієнт трохи довший за екран, щоб він тягнувся й під нижньою панеллю Safari
+    @media (max-width: typo.$mobile) {
+        min-height: calc(100lvh + 120px);
+    }
+
     .main {
-        display: flex;
         flex: 1;
-        flex-direction: column;
-        justify-content: center;
     }
 }
 

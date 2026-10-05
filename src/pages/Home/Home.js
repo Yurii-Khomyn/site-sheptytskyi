@@ -16,6 +16,14 @@ import 'Sections/Tools/Tools.scss';
 import 'Sections/Examples/Examples.scss';
 import 'Sections/Footer/Footer.scss';
 
+// Синя смужка для Safari на iPhone (див. .safari-top-tint у styles.scss) — лише на самому верху сторінки
+const safariTopTint = document.querySelector('.safari-top-tint');
+const updateSafariTopTint = () => {
+    safariTopTint?.classList.toggle('is-hidden', window.scrollY > 4);
+};
+window.addEventListener('scroll', updateSafariTopTint, { passive: true });
+updateSafariTopTint();
+
 window.addEventListener('DOMContentLoaded', () => {
     // hide the loading screen
     hideLoadingScreen();
