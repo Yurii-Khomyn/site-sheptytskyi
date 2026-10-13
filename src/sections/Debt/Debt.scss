@@ -143,6 +143,17 @@
     margin-bottom: 6px;
 }
 
+// «Заборгованості немає» — замість списку, коли всі суми нульові
+.debt__empty {
+    display: flex;
+    align-items: center;
+    padding: 32px 24px;
+}
+
+.debt__empty-title {
+    @include h4;
+}
+
 // адреса окремої комунальної послуги (якщо відрізняється від адреси в заголовку картки)
 .debt__tax-address {
     margin-bottom: 6px;
