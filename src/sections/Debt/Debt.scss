@@ -27,7 +27,9 @@
         color: $placeholder;
     }
 
-    &:disabled {
+    // під час запиту поле «тільки для читання» (курсор лишається), виглядає неактивним
+    &:disabled,
+    &[readonly] {
         color: $disabled-text;
 
         &::placeholder {

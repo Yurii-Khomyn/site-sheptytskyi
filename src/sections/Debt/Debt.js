@@ -210,13 +210,30 @@ const inputText = document.querySelector(".debt__input")
 const btnSubmit = document.querySelector('.debt__submit')
 const submitForm = document.querySelector('.debt__form')
 
+// Після помилки чи «нічого не знайдено» (або кроку з датою народження) — курсор назад у поле,
+// у кінець тексту, щоб можна було одразу виправити. Після успішного пошуку не чіпаємо:
+// сторінка прокручується до картки, а клавіатура на телефоні її б закрила.
+const needsCorrection = () =>
+    state.status === statuses.Error
+    || (state.status === statuses.Success && typeof state.data?.data === 'string')
+const focusInputForCorrection = () => {
+    // успіх — прибираємо курсор, щоб клавіатура на телефоні не закривала картку з результатом
+    if (!needsCorrection()) {
+        if (state.status === statuses.Success && document.activeElement === inputText) inputText.blur()
+        return
+    }
+    inputText.focus({ preventScroll: true })
+    const end = inputText.value.length
+    try { inputText.setSelectionRange(end, end) } catch (e) { /* поле без підтримки виділення */ }
+}
+
 const fetchData = async (inputData, url) => {
     try {
         state.status = statuses.Pending
         state.error = ""
         state.data = []
         state.disabled = true
-        inputText.disabled = true
+        inputText.readOnly = true
         btnSubmit.disabled = true
         updateUI()
 
@@ -261,8 +278,9 @@ const fetchData = async (inputData, url) => {
     finally {
         // ПІБ лишаємо в полі (як на макеті); очищаємо лише для кроку з датою народження і після нього
         if (sendData.confirm || url === '/confirm') inputText.value = ""
-        inputText.disabled = false
+        inputText.readOnly = false
         updateSubmitState()
+        focusInputForCorrection()
     }
 }
 
@@ -318,7 +336,7 @@ const fetchAdminService = async (identifier) => {
     state.status = statuses.Pending
     state.error = ""
     state.data = []
-    inputText.disabled = true
+    inputText.readOnly = true
     btnSubmit.disabled = true
     updateUI()
 
@@ -347,9 +365,10 @@ const fetchAdminService = async (identifier) => {
         state.status = statuses.Error
         state.error = 'Не вдалося отримати дані. Спробуйте, будь ласка, пізніше.'
     } finally {
-        inputText.disabled = false
+        inputText.readOnly = false
         updateUI()
         updateSubmitState()
+        focusInputForCorrection()
     }
 }
 
@@ -360,7 +379,7 @@ const fetchUtilities = async (contractNumber) => {
     state.status = statuses.Pending
     state.error = ""
     state.data = []
-    inputText.disabled = true
+    inputText.readOnly = true
     btnSubmit.disabled = true
     updateUI()
 
@@ -392,9 +411,10 @@ const fetchUtilities = async (contractNumber) => {
         state.status = statuses.Error
         state.error = 'Не вдалося отримати дані. Спробуйте, будь ласка, пізніше.'
     } finally {
-        inputText.disabled = false
+        inputText.readOnly = false
         updateUI()
         updateSubmitState()
+        focusInputForCorrection()
     }
 }
 
@@ -508,7 +528,6 @@ const updateUI = () => {
         // Текстова відповідь бекенду: "нічого не знайдено" або прохання ввести дату народження
         if (data.data && typeof data.data === "string") {
             setHint(withNotFoundHint(data.data, 'taxes'), !sendData.confirm)
-            inputText.focus()
             return
         }
 
@@ -1187,7 +1206,11 @@ updateSubmitState()
 
 submitForm.addEventListener('submit', async (event) => {
     event.preventDefault();
-    if (state.status === statuses.Pending || showValidation(true)) return
+    if (state.status === statuses.Pending) return
+    if (showValidation(true)) {
+        inputText.focus({ preventScroll: true })
+        return
+    }
     if (searchMode === 'utilities') {
         await fetchUtilities(inputText.value.trim().replace(/\s+/g, ' '))
     } else if (searchMode === 'admin') {
