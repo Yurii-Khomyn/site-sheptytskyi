@@ -451,11 +451,19 @@ const updateUI = () => {
         card.appendChild(head)
 
         // === СПИСОК ПОДАТКІВ ===
-        // Податки із заборгованістю — першими (від більшої суми), нульові — після них з неактивною кнопкою
+        // Податки із заборгованістю — першими (від більшої суми) з кнопкою «Сплатити», нульові — після них без кнопки.
+        // Якщо боргів немає зовсім — замість списку напис «Заборгованості немає».
         privatUrls.clear()
         const taxes = TAXES
             .map((tax) => ({ ...tax, amount: Number(data?.data?.[tax.type]) || 0 }))
             .sort((a, b) => (b.amount > 0) - (a.amount > 0) || b.amount - a.amount)
+
+        if (!taxes.some((tax) => tax.amount > 0)) {
+            card.appendChild(createNoDebtMessage())
+            container.appendChild(card)
+            setTimeout(() => smoothScrollTo(section), 100);
+            return
+        }
 
         const list = createElement('ul', 'debt__list', '')
         taxes.forEach((tax) => {
@@ -468,12 +476,13 @@ const updateUI = () => {
             item.appendChild(createElement('p', 'debt__tax-name', `${tax.title} ${tax.code}`))
             item.appendChild(createElement('p', 'debt__tax-amount', formatAmount(tax.amount)))
 
-            const payButton = createElement('button', 'button button--outline button--block debt__pay-button', 'Сплатити')
-            payButton.type = 'button'
-            payButton.disabled = !hasDebt
-            payButton.dataset.taxType = tax.type
-            payButton.dataset.taxTitle = tax.title
-            item.appendChild(payButton)
+            if (hasDebt) {
+                const payButton = createElement('button', 'button button--outline button--block debt__pay-button', 'Сплатити')
+                payButton.type = 'button'
+                payButton.dataset.taxType = tax.type
+                payButton.dataset.taxTitle = tax.title
+                item.appendChild(payButton)
+            }
 
             list.appendChild(item)
         })
@@ -494,6 +503,13 @@ const updateUI = () => {
     }
 }
 
+// Напис у картці, коли боргів немає зовсім
+function createNoDebtMessage() {
+    const box = createElement('div', 'debt__empty', '')
+    box.appendChild(createElement('p', 'debt__empty-title', 'Заборгованості немає'))
+    return box
+}
+
 // Картка комунальної заборгованості: договір і адреса, далі послуги (з боргом — першими)
 function createUtilitiesCard({ utilities, contractNumber }) {
     const first = utilities[0] || {}
@@ -507,6 +523,11 @@ function createUtilitiesCard({ utilities, contractNumber }) {
         head.appendChild(createElement('p', '', first.adress))
     }
     card.appendChild(head)
+
+    if (!utilities.some((item) => (Number(item.charge) || 0) > 0)) {
+        card.appendChild(createNoDebtMessage())
+        return card
+    }
 
     const list = createElement('ul', 'debt__list', '')
     utilities
