@@ -107,6 +107,12 @@
     padding-top: 48px;
 }
 
+// якщо одразу після картки йде футер (без «Інструментів» / «Якщо виникли запитання»),
+// картці потрібен нижній відступ, інакше її низ ховається під футером
+.debt:has(+ .footer) {
+    padding-bottom: 72px;
+}
+
 .debt__info {
     max-width: 720px;
 }
@@ -152,6 +158,49 @@
 
 .debt__empty-title {
     @include h4;
+}
+
+// картка адміністративної послуги: значення під підписами й блок реквізитів
+.debt__card-value {
+    margin-bottom: 20px;
+    @include h5;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.debt__details {
+    padding: 24px;
+
+    // на десктопі — той самий верхній відступ, що й у лівої колонки (.debt__card-head)
+    @media (min-width: $desktop) {
+        padding: 32px 24px;
+    }
+}
+
+.debt__details-value {
+    margin-bottom: 16px;
+    word-break: break-word; // довгий IBAN не вилазить за край на телефоні
+}
+
+.debt__details-pay {
+    width: 100%;
+    margin-top: 8px;
+
+    @media (min-width: $desktop) {
+        width: auto;
+        min-height: 40px;
+        padding: 8px 24px;
+    }
+}
+
+// помилка оплати під кнопкою «Сплатити»
+.debt__pay-error {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    color: $error;
+    @include small;
 }
 
 // адреса окремої комунальної послуги (якщо відрізняється від адреси в заголовку картки)
