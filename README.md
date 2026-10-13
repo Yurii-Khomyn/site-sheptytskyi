@@ -16,6 +16,9 @@ npm run build   # зібрати сайт у папку dist/ для хости�
 
 - `POST /check-utility-debt` з `{ contractNumber }` — заборгованість за номером договору.
   Відповідь: `{ data: [{ payerident, adress, paymentPurpose, charge }] }`, помилка — не-2xx з `{ message }`.
+- `POST /utility-pay` з `{ contractNumber, paymentPurpose, sum }` → `{ url }` — оплата послуги з боргом (кнопка «Сплатити»).
+  **TODO:** адреса тимчасова, підставити справжню (`UTILITY_PAY_URL` у `src/sections/Debt/Debt.js`).
+  Якщо `/check-utility-debt` віддає для послуги посилання на оплату (`url`), кнопка відкриває його одразу.
 
 На сервері розробки (`npm start`) сайт бере тестові дані, у збірці (`npm run build`) — справжній бекенд.
 Тестові договори: `123456` (є борги), `777777` (без боргу), інші — «нічого не знайдено».

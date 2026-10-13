@@ -266,6 +266,93 @@ const fetchData = async (inputData, url) => {
     }
 }
 
+// ============================================================
+// АДМІНІСТРАТИВНІ ПОСЛУГИ: пошук рахунку за 6-значним номером квитанції й оплата онлайн.
+// POST /api/searchAccount { identifier } → дані рахунку (платник, сума, призначення, реквізити)
+// POST /api/payOnline     { identifier } → { url } — посилання на оплату
+// TODO(бекенд): звірити назви полів відповіді з API (див. normalizeAdminAccount).
+// ============================================================
+const ADMIN_SEARCH_URL = '/api/searchAccount'
+const ADMIN_PAY_URL = '/api/payOnline'
+
+const MOCK_ADMIN = {
+    '608936': {
+        success: true,
+        account_number: '608936',
+        payer: 'Дудяк Василь Романович',
+        amount: 151.4,
+        name: 'ЗТГ/22012500; За надання інших адміністративних послуг (інформації з ДЗК)',
+        edrpou: '38008294',
+        mfo: '305299',
+        iban: 'UA348999980334179879027013945',
+    },
+}
+
+const mockAdminFetch = async (url, identifier) => {
+    await new Promise((r) => setTimeout(r, MOCK.latencyMs))
+    const account = MOCK_ADMIN[identifier]
+    if (url === ADMIN_PAY_URL) return mockResponse(account ? { url: null, mock: true } : { message: 'Рахунок не знайдено' }, account ? 200 : 404)
+    return account
+        ? mockResponse(account)
+        : mockResponse({ success: false, message: 'За вказаними даними інформацію не знайдено.' }, 404)
+}
+
+// Приводимо відповідь до одного вигляду: бекенд може віддати поля під різними назвами
+const pick = (obj, keys) => keys.map((key) => obj?.[key]).find((value) => value !== undefined && value !== null && value !== '')
+const normalizeAdminAccount = (body, identifier) => {
+    const raw = body?.data && typeof body.data === 'object' ? body.data : body
+    if (!raw || typeof raw !== 'object' || raw.success === false) return null
+    return {
+        number: pick(raw, ['account_number', 'accountNumber', 'identifier', 'number']) ?? identifier,
+        payer: pick(raw, ['payer', 'payerName', 'fullName', 'name_payer']),
+        amount: Number(pick(raw, ['amount', 'sum', 'charge'])) || 0,
+        purpose: pick(raw, ['name', 'purpose', 'paymentPurpose', 'serviceName']),
+        edrpou: pick(raw, ['edrpou', 'EDRPOU', 'code']),
+        mfo: pick(raw, ['mfo', 'MFO']),
+        iban: pick(raw, ['iban', 'IBAN', 'account']),
+        payUrl: pick(raw, ['url', 'payUrl', 'paymentUrl']),
+    }
+}
+
+const fetchAdminService = async (identifier) => {
+    state.status = statuses.Pending
+    state.error = ""
+    state.data = []
+    inputText.disabled = true
+    btnSubmit.disabled = true
+    updateUI()
+
+    try {
+        const res = USE_MOCK
+            ? await mockAdminFetch(ADMIN_SEARCH_URL, identifier)
+            : await fetch(ADMIN_SEARCH_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier }),
+            })
+        const body = await res.json()
+        const account = res.ok ? normalizeAdminAccount(body, identifier) : null
+        if (!account) {
+            state.status = statuses.Error
+            state.error = withNotFoundHint(
+                body?.message || body?.error || (typeof body?.data === 'string' && body.data) || 'нічого не знайдено',
+                'admin'
+            )
+        } else {
+            state.status = statuses.Success
+            state.data = { admin: account, identifier }
+        }
+    } catch (error) {
+        console.error('Admin service request failed:', error)
+        state.status = statuses.Error
+        state.error = 'Не вдалося отримати дані. Спробуйте, будь ласка, пізніше.'
+    } finally {
+        inputText.disabled = false
+        updateUI()
+        updateSubmitState()
+    }
+}
+
 // Пошук комунальної заборгованості за номером договору: POST /check-utility-debt
 // Відповідь: { data: [{ payerident, contractNumber, adress, paymentPurpose, charge }] } або масив;
 // помилка — не-2xx з { message }
@@ -386,6 +473,7 @@ const DEFAULT_HINT = 'Дані використовуються для пере�
 const NOT_FOUND_TEXT = {
     taxes: 'За вашим запитом нічого не знайдено. Перевірте правильність написання прізвища, імені та по батькові.',
     utilities: 'За вказаним номером договору нічого не знайдено. Перевірте, чи правильно введено номер.',
+    admin: 'За вказаним номером квитанції нічого не знайдено. Перевірте, чи правильно введено номер.',
 }
 const isNotFound = (text) => /нічого не знайдено|не знайден/i.test(String(text || ''))
 const withNotFoundHint = (text, mode) => (isNotFound(text) ? NOT_FOUND_TEXT[mode] : text)
@@ -426,6 +514,12 @@ const updateUI = () => {
 
         setHint(DEFAULT_HINT)
         section.hidden = false
+
+        if (data?.admin) {
+            container.appendChild(createAdminCard(data))
+            setTimeout(() => smoothScrollTo(section), 100);
+            return
+        }
 
         if (data?.utilities) {
             container.appendChild(createUtilitiesCard(data))
@@ -510,6 +604,121 @@ function createNoDebtMessage() {
     return box
 }
 
+// Відкрити сторінку оплати: вікно відкриваємо одразу (до запиту), інакше браузер заблокує його;
+// requestPayment() повертає Response з { url }. Помилка — текстом під кнопкою.
+async function openPayment(requestPayment, button, place, testMessage) {
+    place.querySelector('.debt__pay-error')?.remove()
+    const popup = window.open('', '_blank')
+    const label = button.textContent
+    button.disabled = true
+    button.textContent = 'Готуємо оплату…'
+    try {
+        const res = await requestPayment()
+        const body = await res.json()
+        if (USE_MOCK && body?.mock) {
+            popup?.document.write(`<p style="font:16px sans-serif;padding:24px">${testMessage}</p>`)
+            return
+        }
+        if (!res.ok || !body?.url) throw new Error(body?.message || 'Немає посилання на оплату')
+        if (popup && !popup.closed) popup.location.href = body.url
+        else window.location.href = body.url
+    } catch (error) {
+        console.error('Payment failed:', error)
+        popup?.close()
+        place.appendChild(createElement('p', 'debt__pay-error', 'Не вдалося сформувати оплату. Спробуйте, будь ласка, пізніше.'))
+    } finally {
+        button.disabled = false
+        button.textContent = label
+    }
+}
+
+// Картка адміністративної послуги (за макетом): ліворуч — рахунок, платник, сума;
+// праворуч — призначення й реквізити, кнопка «Оплатити онлайн»
+function createAdminCard({ admin, identifier }) {
+    const card = createElement('div', 'debt__card', '')
+
+    const head = createElement('div', 'debt__card-head', '')
+    head.appendChild(createElement('p', 'debt__card-date', 'Рахунок за запитом'))
+    head.appendChild(createElement('h2', 'debt__card-name', admin.number))
+    if (admin.payer) {
+        head.appendChild(createElement('p', 'debt__card-label', 'Платник'))
+        head.appendChild(createElement('p', 'debt__card-value', formatPersonName(admin.payer)))
+    }
+    head.appendChild(createElement('p', 'debt__card-label', 'Сума'))
+    head.appendChild(createElement('p', 'debt__card-value', `${admin.amount.toFixed(2)} грн`))
+    card.appendChild(head)
+
+    const details = createElement('div', 'debt__details', '')
+    ;[['Призначення', admin.purpose], ['ЄДРПОУ', admin.edrpou], ['МФО', admin.mfo], ['IBAN', admin.iban]]
+        .filter(([, value]) => value)
+        .forEach(([label, value]) => {
+            details.appendChild(createElement('p', 'debt__card-label', label))
+            details.appendChild(createElement('p', 'debt__details-value', value))
+        })
+
+    if (admin.amount > 0) {
+        const payButton = createElement('button', 'button button--dark debt__details-pay', 'Оплатити онлайн')
+        payButton.type = 'button'
+        payButton.addEventListener('click', () => {
+            if (admin.payUrl) return window.open(admin.payUrl, '_blank', 'noopener,noreferrer')
+            openPayment(
+                () => (USE_MOCK
+                    ? mockAdminFetch(ADMIN_PAY_URL, identifier)
+                    : fetch(ADMIN_PAY_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identifier }),
+                    })),
+                payButton,
+                details,
+                'Тестові дані: тут відкриється сторінка оплати адміністративної послуги.'
+            )
+        })
+        details.appendChild(payButton)
+    }
+    card.appendChild(details)
+    return card
+}
+
+// ============================================================
+// ОПЛАТА КОМУНАЛЬНОЇ ПОСЛУГИ
+// Якщо бекенд у відповіді /check-utility-debt віддає посилання на оплату послуги
+// (поле url / paymentUrl / payUrl / link) — відкриваємо його.
+// Інакше — запит UTILITY_PAY_URL, який має повернути { url } (або { message } при помилці).
+// TODO(бекенд): підставити справжню адресу й формат запиту оплати комунальних послуг.
+// ============================================================
+const UTILITY_PAY_URL = '/utility-pay'
+const PAY_LINK_KEYS = ['url', 'paymentUrl', 'payUrl', 'link']
+
+const mockUtilityPay = async () => {
+    await new Promise((r) => setTimeout(r, MOCK.latencyMs))
+    return mockResponse({ url: null, mock: true })
+}
+
+async function payUtility(item, button, row) {
+    const direct = PAY_LINK_KEYS.map((key) => item[key]).find(Boolean)
+    if (direct) {
+        window.open(direct, '_blank', 'noopener,noreferrer')
+        return
+    }
+    await openPayment(
+        () => (USE_MOCK
+            ? mockUtilityPay()
+            : fetch(UTILITY_PAY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contractNumber: item.payerident ?? item.contractNumber,
+                    paymentPurpose: item.paymentPurpose,
+                    sum: item.amount,
+                }),
+            })),
+        button,
+        row,
+        'Тестові дані: тут відкриється сторінка оплати комунальної послуги.'
+    )
+}
+
 // Картка комунальної заборгованості: договір і адреса, далі послуги (з боргом — першими)
 function createUtilitiesCard({ utilities, contractNumber }) {
     const first = utilities[0] || {}
@@ -541,6 +750,13 @@ function createUtilitiesCard({ utilities, contractNumber }) {
                 row.appendChild(createElement('p', 'debt__tax-address', item.adress))
             }
             row.appendChild(createElement('p', 'debt__tax-amount', formatAmount(item.amount)))
+            if (item.amount > 0) {
+                const payButton = createElement('button', 'button button--outline button--block debt__pay-button', 'Сплатити')
+                payButton.type = 'button'
+                payButton.dataset.utility = 'true'
+                payButton.addEventListener('click', () => payUtility({ ...item, contractNumber }, payButton, row))
+                row.appendChild(payButton)
+            }
             list.appendChild(row)
         })
     card.appendChild(list)
@@ -827,8 +1043,20 @@ const validateContract = (value, final) => {
     return ''
 }
 
+// Номер квитанції адміністративної послуги: рівно 6 цифр
+const validateReceipt = (value, final) => {
+    const receipt = value.trim()
+    if (!receipt) return final ? 'Введіть 6-значний номер квитанції.' : ''
+    if (/\D/.test(receipt)) return 'Номер квитанції складається лише з цифр.'
+    if (receipt.length > 6) return 'Номер квитанції має 6 цифр.'
+    if (!final) return ''
+    if (receipt.length < 6) return 'Номер квитанції має 6 цифр.'
+    return ''
+}
+
 const validateInput = (final) => {
     if (searchMode === 'utilities') return validateContract(inputText.value, final)
+    if (searchMode === 'admin') return validateReceipt(inputText.value, final)
     return (sendData.confirm ? validateBirthDate : validateName)(inputText.value, final)
 }
 
@@ -867,8 +1095,10 @@ inputText.addEventListener('keydown', (e) => {
 })
 
 // ============================================================
-// РЕЖИМИ ПОШУКУ: «податки» (за ПІБ) і «комунальні послуги» (за номером договору).
-// На головній перемикаються карткою в «Інструментах» (data-search-switch);
+// РЕЖИМИ ПОШУКУ: «податки» (за ПІБ), «комунальні послуги» (за номером договору)
+// і «адміністративні послуги» (за 6-значним номером квитанції).
+// На головній перемикаються картками в «Інструментах» (data-search-switch="utilities" / "admin"):
+// картка вмикає свій режим, а в ньому сама стає «Переглянути заборгованість по податках»;
 // сторінка utilities.html — лише комунальні послуги (<body data-search-only="utilities">).
 // ============================================================
 const SEARCH_MODES = {
@@ -877,16 +1107,27 @@ const SEARCH_MODES = {
         text: 'Введіть прізвище, імʼя та по-батькові, наприклад: Шептицький Андрей Іванович',
         placeholder: 'Прізвище ім’я по-батькові',
         autocapitalize: 'words',
-        switchLabel: 'Переглянути заборгованість по комунальних послугах',
     },
     utilities: {
         title: 'Комунальні послуги Шептицької громади',
         text: 'Введіть номер договору (особового рахунку), щоб перевірити заборгованість за комунальні послуги',
         placeholder: 'Номер договору',
         autocapitalize: 'characters',
-        switchLabel: 'Переглянути заборгованість по податках',
+    },
+    admin: {
+        title: 'Пошук та оплата адміністративних послуг',
+        text: 'Введіть 6-значний номер квитанції для пошуку та оплати',
+        placeholder: 'Номер квитанції',
+        autocapitalize: 'off',
     },
 }
+
+// підписи карток-перемикачів в «Інструментах»
+const SWITCH_LABELS = {
+    utilities: 'Переглянути заборгованість по комунальних послугах',
+    admin: 'Оплата адміністративних послуг',
+}
+const BACK_TO_TAXES_LABEL = 'Переглянути заборгованість по податках'
 
 let searchMode = document.body.dataset.searchOnly === 'utilities' ? 'utilities' : 'taxes'
 
@@ -900,9 +1141,12 @@ function applySearchMode() {
     if (label) label.textContent = mode.placeholder
     inputText.placeholder = mode.placeholder
     inputText.setAttribute('autocapitalize', mode.autocapitalize)
-    inputText.setAttribute('autocomplete', searchMode === 'utilities' ? 'off' : 'name')
-    document.querySelectorAll('[data-search-switch] .tools__label').forEach((el) => {
-        el.textContent = mode.switchLabel
+    inputText.setAttribute('autocomplete', searchMode === 'taxes' ? 'name' : 'off')
+    inputText.setAttribute('inputmode', searchMode === 'admin' ? 'numeric' : 'text')
+    document.querySelectorAll('[data-search-switch]').forEach((button) => {
+        const target = button.dataset.searchSwitch
+        const label = button.querySelector('.tools__label')
+        if (label) label.textContent = searchMode === target ? BACK_TO_TAXES_LABEL : SWITCH_LABELS[target]
     })
 }
 
@@ -929,7 +1173,8 @@ if (document.body.dataset.searchOnly) {
 
 document.querySelectorAll('[data-search-switch]').forEach((button) => {
     button.addEventListener('click', () => {
-        setSearchMode(searchMode === 'taxes' ? 'utilities' : 'taxes')
+        const target = button.dataset.searchSwitch
+        setSearchMode(searchMode === target ? 'taxes' : target)
         // нагору до пошуку, курсор — у поле (зупиняємо прокрутку до результату, якщо вона ще йде)
         cancelSmoothScroll()
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -945,6 +1190,8 @@ submitForm.addEventListener('submit', async (event) => {
     if (state.status === statuses.Pending || showValidation(true)) return
     if (searchMode === 'utilities') {
         await fetchUtilities(inputText.value.trim().replace(/\s+/g, ' '))
+    } else if (searchMode === 'admin') {
+        await fetchAdminService(inputText.value.trim())
     } else if (!sendData.confirm) {
         await fetchData({ username: sendData.value.trim().replace(/\s+/g, ' ') }, '/info')
     } else {
@@ -990,7 +1237,8 @@ document.addEventListener('click', (event) => {
 document.addEventListener('click', async (event) => {
     const t = event.target
 
-    if (t.classList && t.classList.contains('debt__pay-button')) {
+    // кнопки оплати комунальних послуг мають власний обробник (payUtility)
+    if (t.classList && t.classList.contains('debt__pay-button') && !t.dataset.utility) {
         openPaymentModal({ taxType: t.dataset.taxType, taxTitle: t.dataset.taxTitle })
         return
     }
