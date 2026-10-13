@@ -143,6 +143,12 @@
     margin-bottom: 6px;
 }
 
+// адреса окремої комунальної послуги (якщо відрізняється від адреси в заголовку картки)
+.debt__tax-address {
+    margin-bottom: 6px;
+    @include small;
+}
+
 .debt__tax-amount {
     margin-bottom: 20px;
     @include h5;

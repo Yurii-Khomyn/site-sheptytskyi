@@ -4,8 +4,16 @@ import MtbLogo from '../../assets/images/icons/ic_mtb.svg'
 import html2pdf from 'html2pdf.js';
 
 // Smooth scroll function with easing
+// номер поточної анімації — щоб її можна було зупинити (cancelSmoothScroll)
+let smoothScrollFrame = 0;
+const cancelSmoothScroll = () => {
+    cancelAnimationFrame(smoothScrollFrame);
+    smoothScrollFrame = 0;
+};
+
 const smoothScrollTo = (targetElement) => {
     if (!targetElement) return;
+    cancelSmoothScroll();
 
     const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - 80; // 80px offset від верху
     const startPosition = window.pageYOffset;
@@ -29,11 +37,11 @@ const smoothScrollTo = (targetElement) => {
         window.scrollTo(0, startPosition + distance * ease);
 
         if (progress < 1) {
-            requestAnimationFrame(animation);
+            smoothScrollFrame = requestAnimationFrame(animation);
         }
     };
 
-    requestAnimationFrame(animation);
+    smoothScrollFrame = requestAnimationFrame(animation);
 };
 
 const statuses = {
@@ -134,8 +142,30 @@ const toISODate = (s) => {
 
 const mockResponse = (body, status = 200) => ({
     status,
+    ok: status >= 200 && status < 300,
     json: async () => body,
 })
+
+// Тестові договори для комунальних послуг (формат як у POST /check-utility-debt)
+const MOCK_UTILITIES = {
+    '123456': [
+        { payerident: '123456', adress: 'м. Шептицький, просп. Шевченка, 19, кв. 7', paymentPurpose: 'Водопостачання та водовідведення', charge: 845.6 },
+        { payerident: '123456', adress: 'м. Шептицький, просп. Шевченка, 19, кв. 7', paymentPurpose: 'Вивезення побутових відходів', charge: 0 },
+        { payerident: '123456', adress: 'м. Шептицький, просп. Шевченка, 19, кв. 7', paymentPurpose: 'Утримання будинку та прибудинкової території', charge: 312.15 },
+    ],
+    // договір без боргу
+    '777777': [
+        { payerident: '777777', adress: 'м. Шептицький, вул. Івана Франка, 3, кв. 12', paymentPurpose: 'Водопостачання та водовідведення', charge: 0 },
+    ],
+}
+
+const mockUtilitiesFetch = async (contractNumber) => {
+    await new Promise((r) => setTimeout(r, MOCK.latencyMs))
+    const items = MOCK_UTILITIES[contractNumber.replace(/\s+/g, '')]
+    return items
+        ? mockResponse({ data: items })
+        : mockResponse({ message: 'За вказаним номером договору нічого не знайдено.' }, 404)
+}
 
 const mockFetch = async (inputData, url) => {
     await new Promise((r) => setTimeout(r, MOCK.latencyMs))
@@ -236,6 +266,51 @@ const fetchData = async (inputData, url) => {
     }
 }
 
+// Пошук комунальної заборгованості за номером договору: POST /check-utility-debt
+// Відповідь: { data: [{ payerident, contractNumber, adress, paymentPurpose, charge }] } або масив;
+// помилка — не-2xx з { message }
+const fetchUtilities = async (contractNumber) => {
+    state.status = statuses.Pending
+    state.error = ""
+    state.data = []
+    inputText.disabled = true
+    btnSubmit.disabled = true
+    updateUI()
+
+    try {
+        const res = USE_MOCK
+            ? await mockUtilitiesFetch(contractNumber)
+            : await fetch('/check-utility-debt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contractNumber }),
+            })
+        const body = await res.json()
+        const items = Array.isArray(body?.data) ? body.data : (Array.isArray(body) ? body : null)
+
+        if (!res.ok || !items || !items.length) {
+            state.status = statuses.Error
+            state.error = withNotFoundHint(
+                body?.message
+                    || (typeof body?.data === 'string' && body.data)
+                    || 'За вказаним номером договору нічого не знайдено.',
+                'utilities'
+            )
+        } else {
+            state.status = statuses.Success
+            state.data = { utilities: items, contractNumber }
+        }
+    } catch (error) {
+        console.error('Utilities request failed:', error)
+        state.status = statuses.Error
+        state.error = 'Не вдалося отримати дані. Спробуйте, будь ласка, пізніше.'
+    } finally {
+        inputText.disabled = false
+        updateUI()
+        updateSubmitState()
+    }
+}
+
 function createElement(tag, classname, content) {
     const element = document.createElement(tag)
     element.className = classname
@@ -307,6 +382,14 @@ const formatAmount = (number) => `UAH ${(Number(number) || 0).toFixed(2)}`
 
 const DEFAULT_HINT = 'Дані використовуються для перевірки заборгованості.'
 
+// «Нічого не знайдено» від бекенду — доповнюємо порадою перевірити написання
+const NOT_FOUND_TEXT = {
+    taxes: 'За вашим запитом нічого не знайдено. Перевірте правильність написання прізвища, імені та по батькові.',
+    utilities: 'За вказаним номером договору нічого не знайдено. Перевірте, чи правильно введено номер.',
+}
+const isNotFound = (text) => /нічого не знайдено|не знайден/i.test(String(text || ''))
+const withNotFoundHint = (text, mode) => (isNotFound(text) ? NOT_FOUND_TEXT[mode] : text)
+
 const setHint = (text, isError = false) => {
     const hint = document.getElementById('debt_hint')
     hint.textContent = text
@@ -336,13 +419,19 @@ const updateUI = () => {
         const data = state.data;
         // Текстова відповідь бекенду: "нічого не знайдено" або прохання ввести дату народження
         if (data.data && typeof data.data === "string") {
-            setHint(data.data, !sendData.confirm)
+            setHint(withNotFoundHint(data.data, 'taxes'), !sendData.confirm)
             inputText.focus()
             return
         }
 
         setHint(DEFAULT_HINT)
         section.hidden = false
+
+        if (data?.utilities) {
+            container.appendChild(createUtilitiesCard(data))
+            setTimeout(() => smoothScrollTo(section), 100);
+            return
+        }
 
         const card = createElement('div', 'debt__card', '')
 
@@ -403,6 +492,38 @@ const updateUI = () => {
         setTimeout(() => smoothScrollTo(section), 100);
         return;
     }
+}
+
+// Картка комунальної заборгованості: договір і адреса, далі послуги (з боргом — першими)
+function createUtilitiesCard({ utilities, contractNumber }) {
+    const first = utilities[0] || {}
+    const card = createElement('div', 'debt__card', '')
+
+    const head = createElement('div', 'debt__card-head', '')
+    head.appendChild(createElement('p', 'debt__card-date', 'Заборгованість за договором:'))
+    head.appendChild(createElement('h2', 'debt__card-name', first.payerident ?? first.contractNumber ?? contractNumber))
+    if (first.adress) {
+        head.appendChild(createElement('p', 'debt__card-label', 'Адреса'))
+        head.appendChild(createElement('p', '', first.adress))
+    }
+    card.appendChild(head)
+
+    const list = createElement('ul', 'debt__list', '')
+    utilities
+        .map((item) => ({ ...item, amount: Number(item.charge) || 0 }))
+        .sort((a, b) => (b.amount > 0) - (a.amount > 0) || b.amount - a.amount)
+        .forEach((item) => {
+            const row = createElement('li', 'debt__tax', '')
+            row.appendChild(createElement('p', 'debt__tax-name', item.paymentPurpose || 'Комунальна послуга'))
+            // адреса окремої послуги — лише якщо вона інша, ніж у заголовку
+            if (item.adress && item.adress !== first.adress) {
+                row.appendChild(createElement('p', 'debt__tax-address', item.adress))
+            }
+            row.appendChild(createElement('p', 'debt__tax-amount', formatAmount(item.amount)))
+            list.appendChild(row)
+        })
+    card.appendChild(list)
+    return card
 }
 
 updateUI()
@@ -672,7 +793,23 @@ const validateBirthDate = (value, final) => {
     return ''
 }
 
-const validateInput = (final) => (sendData.confirm ? validateBirthDate : validateName)(inputText.value, final)
+// Номер договору: цифри, літери, дефіс, скісна риска; 3–30 значущих символів
+const CONTRACT_CHARS = new RegExp(`^[0-9A-Za-z${UA}/\\-\\s]*$`)
+const validateContract = (value, final) => {
+    const contract = value.trim()
+    if (!contract) return final ? 'Введіть номер договору.' : ''
+    if (!CONTRACT_CHARS.test(contract)) return 'Номер договору може містити лише цифри, літери, «-» і «/».'
+    if (!final) return ''
+    const significant = contract.replace(/[\s\/-]/g, '')
+    if (significant.length < 3) return 'Номер договору занадто короткий.'
+    if (significant.length > 30) return 'Номер договору занадто довгий.'
+    return ''
+}
+
+const validateInput = (final) => {
+    if (searchMode === 'utilities') return validateContract(inputText.value, final)
+    return (sendData.confirm ? validateBirthDate : validateName)(inputText.value, final)
+}
 
 // кнопка активна лише для валідного значення і не під час запиту
 function updateSubmitState() {
@@ -708,12 +845,86 @@ inputText.addEventListener('keydown', (e) => {
     }
 })
 
+// ============================================================
+// РЕЖИМИ ПОШУКУ: «податки» (за ПІБ) і «комунальні послуги» (за номером договору).
+// На головній перемикаються карткою в «Інструментах» (data-search-switch);
+// сторінка utilities.html — лише комунальні послуги (<body data-search-only="utilities">).
+// ============================================================
+const SEARCH_MODES = {
+    taxes: {
+        title: 'Портал місцевих податків Шептицької громади',
+        text: 'Введіть прізвище, імʼя та по-батькові, наприклад: Шептицький Андрей Іванович',
+        placeholder: 'Прізвище ім’я по-батькові',
+        autocapitalize: 'words',
+        switchLabel: 'Переглянути заборгованість по комунальних послугах',
+    },
+    utilities: {
+        title: 'Комунальні послуги Шептицької громади',
+        text: 'Введіть номер договору (особового рахунку), щоб перевірити заборгованість за комунальні послуги',
+        placeholder: 'Номер договору',
+        autocapitalize: 'characters',
+        switchLabel: 'Переглянути заборгованість по податках',
+    },
+}
+
+let searchMode = document.body.dataset.searchOnly === 'utilities' ? 'utilities' : 'taxes'
+
+function applySearchMode() {
+    const mode = SEARCH_MODES[searchMode]
+    const title = document.querySelector('.intro__title')
+    const text = document.querySelector('.intro__text')
+    const label = document.querySelector('label[for="debt_input"]')
+    if (title) title.textContent = mode.title
+    if (text) text.textContent = mode.text
+    if (label) label.textContent = mode.placeholder
+    inputText.placeholder = mode.placeholder
+    inputText.setAttribute('autocapitalize', mode.autocapitalize)
+    inputText.setAttribute('autocomplete', searchMode === 'utilities' ? 'off' : 'name')
+    document.querySelectorAll('[data-search-switch] .tools__label').forEach((el) => {
+        el.textContent = mode.switchLabel
+    })
+}
+
+function setSearchMode(mode) {
+    searchMode = mode
+    // скидаємо пошук: поле, уточнення за датою народження, результат
+    sendData = { value: '', ident: '', confirm: false }
+    inputText.value = ''
+    state.status = statuses.Idle
+    state.error = ''
+    state.data = []
+    applySearchMode()
+    updateUI()
+    updateSubmitState()
+}
+
+// сторінка лише з комунальними послугами — без перемикача на податки, своя назва в шапці
+if (document.body.dataset.searchOnly) {
+    document.querySelectorAll('[data-search-switch]').forEach((el) => el.closest('li')?.remove())
+    const brand = document.querySelector('.header__brand-text')
+    if (brand) brand.innerHTML = 'Портал комунальних послуг<br>Шептицької громади'
+    document.querySelector('.header__brand')?.setAttribute('aria-label', 'Портал комунальних послуг Шептицької громади — на початок сторінки')
+}
+
+document.querySelectorAll('[data-search-switch]').forEach((button) => {
+    button.addEventListener('click', () => {
+        setSearchMode(searchMode === 'taxes' ? 'utilities' : 'taxes')
+        // нагору до пошуку, курсор — у поле (зупиняємо прокрутку до результату, якщо вона ще йде)
+        cancelSmoothScroll()
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setTimeout(() => inputText.focus({ preventScroll: true }), 400)
+    })
+})
+
+applySearchMode()
 updateSubmitState()
 
 submitForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (state.status === statuses.Pending || showValidation(true)) return
-    if (!sendData.confirm) {
+    if (searchMode === 'utilities') {
+        await fetchUtilities(inputText.value.trim().replace(/\s+/g, ' '))
+    } else if (!sendData.confirm) {
         await fetchData({ username: sendData.value.trim().replace(/\s+/g, ' ') }, '/info')
     } else {
         // Нормалізуємо введену дату народження ДД.ММ.РРРР -> yyyy-mm-dd для звірки на бекенді

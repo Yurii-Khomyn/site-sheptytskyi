@@ -5,6 +5,11 @@
     padding-top: 0;
 }
 
+// без блоку «Якщо виникли запитання» перед «Інструментами» (сторінка комунальних послуг)
+.debt + .tools {
+    padding-top: 72px;
+}
+
 .tools__title {
     margin-bottom: 40px;
 }
@@ -16,6 +21,13 @@
 }
 
 .tools__item {
+    // картка може бути і посиланням, і кнопкою (перемикач пошуку)
+    width: 100%;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    background: none;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
