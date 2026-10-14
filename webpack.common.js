@@ -5,8 +5,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     entry: {
-        homePage: './src/pages/Home/Home.js',
-        // окрема версія: лише комунальні послуги
+        // гілка version-2: сайт лише для комунальних послуг
         utilitiesPage: './src/pages/Utilities/Utilities.js',
     },
     output: {
@@ -56,13 +55,9 @@ module.exports = {
     },
     plugins: [
         new HtmlWebpackPlugin({
-            template: './src/pages/Home/Home.html',
-            filename: 'index.html',
-            chunks: ['homePage'],
-        }),
-        new HtmlWebpackPlugin({
             template: './src/pages/Utilities/Utilities.html',
-            filename: 'utilities.html',
+            // у version-2 сторінка комунальних послуг — головна сторінка сайту
+            filename: 'index.html',
             chunks: ['utilitiesPage'],
         }),
     ],
