@@ -16,7 +16,7 @@ npm run build   # зібрати сайт у папку dist/ для хости�
 
 - `POST /check-utility-debt` з `{ contractNumber }` — заборгованість за номером договору.
   Відповідь: `{ data: [{ payerident, adress, paymentPurpose, charge }] }`, помилка — не-2xx з `{ message }`.
-- `POST /utility-pay` з `{ contractNumber, paymentPurpose, sum }` → `{ url }` — оплата послуги з боргом (кнопка «Сплатити»).
+- `POST /pay-utility` з `{ contractNumber, service: "all", amount }` → `{ data: { url } }` — оплата. Кнопка «Сплатити» спершу відкриває вікно, де вводиться довільна сума (від 1 до 400 000 грн).
   **TODO:** адреса тимчасова, підставити справжню (`UTILITY_PAY_URL` у `src/sections/Debt/Debt.js`).
   Якщо `/check-utility-debt` віддає для послуги посилання на оплату (`href`, `url`, `link`…), кнопка одразу переходить за ним (у тій самій вкладці).
 
