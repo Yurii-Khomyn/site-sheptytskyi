@@ -721,40 +721,150 @@ function createAdminCard({ admin, identifier }) {
 
 // ============================================================
 // ОПЛАТА КОМУНАЛЬНОЇ ПОСЛУГИ
-// Якщо бекенд у відповіді /check-utility-debt віддає посилання на оплату послуги
-// (поле href / url / link / paymentUrl…, див. PAY_LINK_KEYS) — переходимо за ним.
-// Інакше — запит UTILITY_PAY_URL, який має повернути { url } (або { message } при помилці).
-// TODO(бекенд): підставити справжню адресу й формат запиту оплати комунальних послуг.
+// «Сплатити» відкриває модалку, де можна ввести довільну суму (повністю, частково або з передплатою).
+// Далі POST UTILITY_PAY_URL з { contractNumber, service, amount } -> { data: { url, sum }, error, message }
+// і перехід на сторінку оплати в тій самій вкладці.
 // ============================================================
-const UTILITY_PAY_URL = '/utility-pay'
+const UTILITY_PAY_URL = '/pay-utility'
+
+// Максимальна сума одного платежу
+const MAX_PAY_AMOUNT = 400000
+
+const formatMoney = (value) => new Intl.NumberFormat('uk-UA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+
+// "1500", "1 500,5", "1500.50 грн" -> 1500.5; некоректне -> null
+function parsePayAmount(text) {
+    const normalized = String(text || '')
+        .toLowerCase()
+        .replace(/грн\.?/g, '')
+        .replace(/\s+/g, '')
+        .replace(',', '.')
+    if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null
+    return Math.round(parseFloat(normalized) * 100) / 100
+}
 
 const mockUtilityPay = async () => {
     await new Promise((r) => setTimeout(r, MOCK.latencyMs))
-    return mockResponse({ url: null, mock: true })
+    return mockResponse({ data: { url: null }, mock: true })
 }
 
-async function payUtility(item, button, row) {
-    const direct = findPayLink(item)
-    if (direct) {
-        goToPayment(direct)
-        return
+// послуга, яку зараз оплачують у модалці
+let utilityPayItem = null
+
+function ensureAmountModal() {
+    if (document.querySelector('.debt__amount-overlay')) return
+    const overlay = document.createElement('div')
+    overlay.className = 'debt__amount-overlay'
+    overlay.innerHTML = `
+      <div class="debt__modal debt__amount-modal" role="dialog" aria-modal="true" aria-labelledby="debt-amount-title">
+        <div class="debt__modal-header">
+          <h3 class="debt__modal-title" id="debt-amount-title">Сума оплати</h3>
+          <button class="debt__modal-close debt__amount-close" type="button" aria-label="Закрити">×</button>
+        </div>
+        <p class="debt__modal-subtitle debt__amount-service"></p>
+        <div class="debt__amount-debt">
+          <span>Сума заборгованості</span>
+          <b class="debt__amount-total"></b>
+        </div>
+        <p class="debt__amount-text">Введіть суму, яку бажаєте оплатити. Можна оплатити повністю, частково або з передплатою.</p>
+        <ul class="debt__amount-limits">
+          <li>Мінімальна сума — 1 грн</li>
+          <li>Максимальна сума — ${formatMoney(MAX_PAY_AMOUNT)} грн</li>
+          <li class="debt__amount-example"></li>
+        </ul>
+        <form class="debt__amount-form" novalidate>
+          <input class="debt__amount-input" inputmode="decimal" autocomplete="off" aria-label="Сума оплати, грн" />
+          <button class="button button--dark debt__amount-pay" type="submit">Сплатити</button>
+        </form>
+        <p class="debt__modal-error debt__amount-error" hidden></p>
+      </div>`
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay || e.target.closest('.debt__amount-close')) closeAmountModal()
+    })
+    overlay.querySelector('.debt__amount-form').addEventListener('submit', (e) => {
+        e.preventDefault()
+        submitUtilityPay()
+    })
+    document.body.appendChild(overlay)
+}
+
+function openAmountModal(item) {
+    ensureAmountModal()
+    utilityPayItem = item
+    const overlay = document.querySelector('.debt__amount-overlay')
+    const total = Math.round(item.amount * 100) / 100
+    overlay.querySelector('.debt__amount-service').textContent = item.paymentPurpose || 'Комунальна послуга'
+    overlay.querySelector('.debt__amount-total').textContent = `${formatMoney(total)} грн`
+    overlay.querySelector('.debt__amount-example').textContent = `Не більше 2 знаків після коми, наприклад ${formatMoney(total)}`
+    const input = overlay.querySelector('.debt__amount-input')
+    input.value = ''
+    input.placeholder = formatMoney(total)
+    overlay.querySelector('.debt__amount-error').hidden = true
+    const payBtn = overlay.querySelector('.debt__amount-pay')
+    payBtn.disabled = false
+    payBtn.textContent = 'Сплатити'
+    overlay.classList.add('debt__amount-overlay--open')
+    input.focus()
+}
+
+function closeAmountModal() {
+    document.querySelector('.debt__amount-overlay')?.classList.remove('debt__amount-overlay--open')
+    utilityPayItem = null
+}
+
+async function submitUtilityPay() {
+    const overlay = document.querySelector('.debt__amount-overlay')
+    const item = utilityPayItem
+    if (!overlay || !item) return
+    const input = overlay.querySelector('.debt__amount-input')
+    const errEl = overlay.querySelector('.debt__amount-error')
+    const payBtn = overlay.querySelector('.debt__amount-pay')
+    const showError = (text) => {
+        errEl.textContent = text
+        errEl.hidden = false
+        input.focus()
     }
-    await openPayment(
-        () => (USE_MOCK
-            ? mockUtilityPay()
-            : fetch(UTILITY_PAY_URL, {
+    errEl.hidden = true
+
+    // перевірка суми — як у боті
+    const amount = parsePayAmount(input.value)
+    if (!amount || amount < 1) {
+        return showError(`Некоректна сума. Введіть число від 1 грн, наприклад ${formatMoney(item.amount)}.`)
+    }
+    if (amount > MAX_PAY_AMOUNT) {
+        return showError(`Максимальна сума одного платежу — ${formatMoney(MAX_PAY_AMOUNT)} грн. Введіть меншу суму.`)
+    }
+
+    payBtn.disabled = true
+    payBtn.textContent = 'Готуємо оплату…'
+    try {
+        const res = USE_MOCK
+            ? await mockUtilityPay()
+            : await fetch(UTILITY_PAY_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contractNumber: item.payerident ?? item.contractNumber,
-                    paymentPurpose: item.paymentPurpose,
-                    sum: item.amount,
-                }),
-            })),
-        button,
-        row,
-        'Тестові дані: тут відкриється сторінка оплати комунальної послуги.'
-    )
+                body: JSON.stringify({ contractNumber: item.payerident ?? item.contractNumber, service: 'all', amount }),
+            })
+        const body = await res.json()
+        // тестові дані (npm start) — посилання на оплату немає, лише позначка в консолі
+        if (USE_MOCK && body?.mock) {
+            console.info(`Тестові дані: оплата ${formatMoney(amount)} грн за договором ${item.payerident ?? item.contractNumber}.`)
+            closeAmountModal()
+            return
+        }
+        const link = findPayLink(body)
+        if (!res.ok || body?.error || !link) {
+            console.warn('Відповідь оплати без посилання:', body)
+            return showError(readableMessage(body?.message, body?.error) || 'Не вдалося сформувати оплату. Спробуйте, будь ласка, пізніше.')
+        }
+        goToPayment(link)
+    } catch (error) {
+        console.error('Payment failed:', error)
+        showError("Помилка мережі. Перевірте з'єднання.")
+    } finally {
+        payBtn.disabled = false
+        payBtn.textContent = 'Сплатити'
+    }
 }
 
 // Картка комунальної заборгованості: договір і адреса, далі послуги (з боргом — першими)
@@ -792,7 +902,7 @@ function createUtilitiesCard({ utilities, contractNumber }) {
                 const payButton = createElement('button', 'button button--outline button--block debt__pay-button', 'Сплатити')
                 payButton.type = 'button'
                 payButton.dataset.utility = 'true'
-                payButton.addEventListener('click', () => payUtility({ ...item, contractNumber }, payButton, row))
+                payButton.addEventListener('click', () => openAmountModal({ ...item, contractNumber }))
                 row.appendChild(payButton)
             }
             list.appendChild(row)
@@ -1279,7 +1389,7 @@ document.addEventListener('click', (event) => {
 document.addEventListener('click', async (event) => {
     const t = event.target
 
-    // кнопки оплати комунальних послуг мають власний обробник (payUtility)
+    // кнопки оплати комунальних послуг мають власний обробник (openAmountModal)
     if (t.classList && t.classList.contains('debt__pay-button') && !t.dataset.utility) {
         openPaymentModal({ taxType: t.dataset.taxType, taxTitle: t.dataset.taxTitle })
         return
@@ -1369,5 +1479,8 @@ document.addEventListener('click', async (event) => {
 })
 
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closePaymentModal()
+    if (e.key === 'Escape') {
+        closePaymentModal()
+        closeAmountModal()
+    }
 })

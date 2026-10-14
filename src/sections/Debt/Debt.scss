@@ -400,6 +400,106 @@
     }
 }
 
+// === МОДАЛКА СУМИ ОПЛАТИ КОМУНАЛЬНИХ ПОСЛУГ ===
+.debt__amount-overlay {
+    @extend .debt__modal-overlay;
+}
+
+.debt__amount-overlay--open {
+    @extend .debt__modal-overlay--open;
+}
+
+.debt__amount-modal {
+    width: min(480px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+}
+
+// плашка з сумою боргу
+.debt__amount-debt {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f4f4f4;
+    border-radius: 8px;
+    font-size: 16px;
+
+    span {
+        color: #555;
+    }
+
+    b {
+        font-size: 20px;
+        white-space: nowrap;
+    }
+}
+
+.debt__amount-text {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+// обмеження — дрібно й сіро, щоб не перебивали головне
+.debt__amount-limits {
+    margin: 0;
+    padding: 0 0 0 12px;
+    border-left: 3px solid #e0e0e0;
+    list-style: none;
+    font-size: 14px;
+    line-height: 1.6;
+    color: $disabled-text;
+}
+
+.debt__amount-form {
+    display: flex;
+    gap: 12px;
+}
+
+.debt__amount-input {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid #c8c8c8;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 20px;
+    color: inherit;
+    background: #fff;
+    transition: border-color $transition;
+
+    &::placeholder {
+        color: $placeholder;
+    }
+
+    &:hover,
+    &:focus {
+        border-color: #000;
+        outline: none;
+    }
+}
+
+.debt__amount-pay {
+    flex-shrink: 0;
+}
+
+@media (max-width: $phone) {
+    .debt__amount-form {
+        flex-direction: column;
+    }
+
+    .debt__amount-input {
+        flex: none;
+    }
+
+    .debt__amount-pay {
+        width: 100%;
+    }
+}
+
 @keyframes debt-modal-spin {
     to {
         transform: rotate(360deg);

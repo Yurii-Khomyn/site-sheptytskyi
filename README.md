@@ -76,7 +76,7 @@ npm run build   # зібрати сайт у папку dist/ для хости�
 - `POST /confirm` з `{ username, ident }` — уточнення, де `ident` — дата у форматі `yyyy-mm-dd`.
 - `POST /payplace-pay` з `{ id, type }` — посилання на оплату через МТБ Банк.
 - `POST /api/searchAccount` з `{ identifier }` — адміністративна послуга за 6-значним номером квитанції; `POST /api/payOnline` з `{ identifier }` → `{ url }` — оплата. **TODO:** звірити назви полів відповіді з API (`normalizeAdminAccount` у `Debt.js`).
-- `POST /utility-pay` з `{ contractNumber, paymentPurpose, sum }` → `{ url }` — оплата комунальної послуги. **TODO:** адреса тимчасова, підставити справжню (`UTILITY_PAY_URL` у `Debt.js`); якщо `/check-utility-debt` віддає посилання на оплату (`url`), кнопка відкриває його одразу.
+- `POST /pay-utility` з `{ contractNumber, service: "all", amount }` → `{ data: { url, sum } }` (помилка — `{ error, message }`) — оплата комунальних послуг. Перед запитом відкривається вікно, де людина вводить довільну суму (від 1 до 400 000 грн, до 2 знаків після коми) — `openAmountModal` у `Debt.js`.
 - `POST /check-utility-debt` з `{ contractNumber }` — комунальна заборгованість за номером договору. Відповідь: `{ data: [{ payerident, adress, paymentPurpose, charge }] }`, помилка — не-2xx з `{ message }`.
 
 На сервері розробки (`npm start`) сайт бере тестові дані (`USE_MOCK` у `Debt.js`). У збірці (`npm run build`) він завжди звертається до справжнього бекенду. Тестові ПІБ: «Тирко Надія Михайлівна», «Кравецький Володимир Іванович», «Шевчук Олена Петрівна», «Іваненко Іван Іванович» (дата народження `01.01.2000`). Тестові договори комунальних послуг: `123456` (два борги), `777777` (без боргу), інші — «нічого не знайдено». Тестова квитанція адміністративних послуг: `608936`.
