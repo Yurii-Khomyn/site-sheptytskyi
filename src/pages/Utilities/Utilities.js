@@ -13,7 +13,6 @@ import { hideLoadingScreen } from 'Sections/LoadingScreen/LoadingScreen';
 import 'Sections/Header/Header.scss';
 import 'Sections/Intro/Intro.scss';
 import 'Sections/Debt/Debt';
-import 'Sections/Tools/Tools.scss';
 import 'Sections/Footer/Footer.scss';
 
 window.addEventListener('DOMContentLoaded', () => {

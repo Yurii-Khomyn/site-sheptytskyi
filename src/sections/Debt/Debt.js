@@ -328,7 +328,7 @@ const normalizeAdminAccount = (body, identifier) => {
         edrpou: pick(raw, ['edrpou', 'EDRPOU', 'code']),
         mfo: pick(raw, ['mfo', 'MFO']),
         iban: pick(raw, ['iban', 'IBAN', 'account']),
-        payUrl: pick(raw, ['url', 'payUrl', 'paymentUrl']),
+        payUrl: findPayLink(raw),
     }
 }
 
@@ -353,7 +353,7 @@ const fetchAdminService = async (identifier) => {
         if (!account) {
             state.status = statuses.Error
             state.error = withNotFoundHint(
-                body?.message || body?.error || (typeof body?.data === 'string' && body.data) || 'нічого не знайдено',
+                readableMessage(body?.message, body?.error, body?.data) || 'нічого не знайдено',
                 'admin'
             )
         } else {
@@ -396,9 +396,9 @@ const fetchUtilities = async (contractNumber) => {
 
         if (!res.ok || !items || !items.length) {
             state.status = statuses.Error
+            // порожній список або службове «ok» замість пояснення — «нічого не знайдено»
             state.error = withNotFoundHint(
-                body?.message
-                    || (typeof body?.data === 'string' && body.data)
+                (items && !items.length ? null : readableMessage(body?.message, body?.error, body?.data))
                     || 'За вказаним номером договору нічого не знайдено.',
                 'utilities'
             )
@@ -495,6 +495,10 @@ const NOT_FOUND_TEXT = {
     utilities: 'За вказаним номером договору нічого не знайдено. Перевірте, чи правильно введено номер.',
     admin: 'За вказаним номером квитанції нічого не знайдено. Перевірте, чи правильно введено номер.',
 }
+// Службові відповіді бекенду («ok», «success»…) — не текст для людини
+const isServiceMessage = (text) => /^(ok|ок|okay|success|true|done)\.?$/i.test(String(text ?? '').trim())
+const readableMessage = (...candidates) =>
+    candidates.find((text) => typeof text === 'string' && text.trim() && !isServiceMessage(text)) || null
 const isNotFound = (text) => /нічого не знайдено|не знайден/i.test(String(text || ''))
 const withNotFoundHint = (text, mode) => (isNotFound(text) ? NOT_FOUND_TEXT[mode] : text)
 
@@ -527,7 +531,7 @@ const updateUI = () => {
         const data = state.data;
         // Текстова відповідь бекенду: "нічого не знайдено" або прохання ввести дату народження
         if (data.data && typeof data.data === "string") {
-            setHint(withNotFoundHint(data.data, 'taxes'), !sendData.confirm)
+            setHint(isServiceMessage(data.data) ? NOT_FOUND_TEXT.taxes : withNotFoundHint(data.data, 'taxes'), !sendData.confirm)
             return
         }
 
@@ -623,27 +627,43 @@ function createNoDebtMessage() {
     return box
 }
 
-// Відкрити сторінку оплати: вікно відкриваємо одразу (до запиту), інакше браузер заблокує його;
-// requestPayment() повертає Response з { url }. Помилка — текстом під кнопкою.
+// Посилання на оплату може прийти в різних полях — шукаємо в об'єкті й у його data
+const PAY_LINK_KEYS = ['href', 'url', 'link', 'paymentUrl', 'payUrl', 'payment_url', 'pay_url', 'paymentLink', 'payLink']
+const findPayLink = (obj) => {
+    for (const source of [obj, obj?.data]) {
+        if (typeof source === 'string' && /^https?:\/\//i.test(source)) return source
+        const link = PAY_LINK_KEYS.map((key) => source?.[key]).find((value) => typeof value === 'string' && value.trim())
+        if (link) return link
+    }
+    return null
+}
+
+// Перехід на сторінку оплати — у тій самій вкладці (браузер не блокує, людину «перекидує» на оплату)
+const goToPayment = (link) => window.location.assign(link)
+
+// Запросити посилання на оплату й перейти за ним. requestPayment() повертає Response.
+// Помилка — текстом під кнопкою.
 async function openPayment(requestPayment, button, place, testMessage) {
     place.querySelector('.debt__pay-error')?.remove()
-    const popup = window.open('', '_blank')
     const label = button.textContent
     button.disabled = true
     button.textContent = 'Готуємо оплату…'
     try {
         const res = await requestPayment()
         const body = await res.json()
+        // тестові дані (npm start) — посилання на оплату немає, лише позначка в консолі
         if (USE_MOCK && body?.mock) {
-            popup?.document.write(`<p style="font:16px sans-serif;padding:24px">${testMessage}</p>`)
+            console.info(testMessage)
             return
         }
-        if (!res.ok || !body?.url) throw new Error(body?.message || 'Немає посилання на оплату')
-        if (popup && !popup.closed) popup.location.href = body.url
-        else window.location.href = body.url
+        const link = findPayLink(body)
+        if (!res.ok || !link) {
+            console.warn('Відповідь оплати без посилання:', body)
+            throw new Error(readableMessage(body?.message, body?.error) || 'Немає посилання на оплату')
+        }
+        goToPayment(link)
     } catch (error) {
         console.error('Payment failed:', error)
-        popup?.close()
         place.appendChild(createElement('p', 'debt__pay-error', 'Не вдалося сформувати оплату. Спробуйте, будь ласка, пізніше.'))
     } finally {
         button.disabled = false
@@ -679,7 +699,7 @@ function createAdminCard({ admin, identifier }) {
         const payButton = createElement('button', 'button button--dark debt__details-pay', 'Оплатити онлайн')
         payButton.type = 'button'
         payButton.addEventListener('click', () => {
-            if (admin.payUrl) return window.open(admin.payUrl, '_blank', 'noopener,noreferrer')
+            if (admin.payUrl) return goToPayment(admin.payUrl)
             openPayment(
                 () => (USE_MOCK
                     ? mockAdminFetch(ADMIN_PAY_URL, identifier)
@@ -702,12 +722,11 @@ function createAdminCard({ admin, identifier }) {
 // ============================================================
 // ОПЛАТА КОМУНАЛЬНОЇ ПОСЛУГИ
 // Якщо бекенд у відповіді /check-utility-debt віддає посилання на оплату послуги
-// (поле url / paymentUrl / payUrl / link) — відкриваємо його.
+// (поле href / url / link / paymentUrl…, див. PAY_LINK_KEYS) — переходимо за ним.
 // Інакше — запит UTILITY_PAY_URL, який має повернути { url } (або { message } при помилці).
 // TODO(бекенд): підставити справжню адресу й формат запиту оплати комунальних послуг.
 // ============================================================
 const UTILITY_PAY_URL = '/utility-pay'
-const PAY_LINK_KEYS = ['url', 'paymentUrl', 'payUrl', 'link']
 
 const mockUtilityPay = async () => {
     await new Promise((r) => setTimeout(r, MOCK.latencyMs))
@@ -715,9 +734,9 @@ const mockUtilityPay = async () => {
 }
 
 async function payUtility(item, button, row) {
-    const direct = PAY_LINK_KEYS.map((key) => item[key]).find(Boolean)
+    const direct = findPayLink(item)
     if (direct) {
-        window.open(direct, '_blank', 'noopener,noreferrer')
+        goToPayment(direct)
         return
     }
     await openPayment(
